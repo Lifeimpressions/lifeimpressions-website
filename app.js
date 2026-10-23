@@ -101,11 +101,19 @@ pages.services = async () => {
   $("#svc").innerHTML = [...CATS.map((x) => x[0]), "More"].map((n) => { const list = c.services.filter((s) => catOf(s.name) === n); return list.length ? `<h2 style="margin:34px 0 16px;font-size:1.6rem">${esc(n)}</h2><div class="grid">${list.map(svcCard).join("")}</div>` : ""; }).join("") +
     `<h2 style="margin:40px 0 16px;font-size:1.6rem">Add-ons</h2><div class="grid">${c.addons.map((a) => `<div class="card"><h3>${esc(a.name)}</h3><div class="price">${inr(a.price_incl_gst)}</div></div>`).join("")}</div>`;
 };
+const PLAY = `<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
+const vidCard = (v, i) => { const yt = v.type === "youtube";
+  const thumb = yt ? `<img loading="lazy" src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" onerror="this.remove()">` : `<span class="vfb">Facebook video</span>`;
+  return `<figure class="vid"><button type="button" class="vbox${yt ? "" : " fb"}" data-i="${i}" aria-label="Play: ${esc(v.title)}">${thumb}<span class="vplay">${PLAY}</span></button><figcaption>${esc(v.title)}</figcaption></figure>`; };
+const playVideo = (btn, v) => { const src = v.type === "youtube" ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?autoplay=1&rel=0` : `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(v.url)}&show_text=false&autoplay=true`;
+  btn.outerHTML = `<div class="vbox playing${v.type === "facebook" ? " fb" : ""}"><iframe src="${src}" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`; };
 pages.gallery = async () => {
-  main.innerHTML = pageHead("Gallery", "A few of the keepsakes we have made for families across Tamil Nadu.") + `<section class="s"><div class="wrap" id="g"></div></section>`;
-  let list = []; try { list = (await (await fetch("gallery.json", { cache: "no-cache" })).json()).photos || []; } catch {}
-  $("#g").innerHTML = list.length ? `<div class="gal">${list.map((p) => `<img loading="lazy" src="${esc(p.src)}" alt="${esc(p.alt || "Lifeimpressions casting")}">`).join("")}</div>` :
-    `<div class="note">Photos are coming soon. See our latest work on Instagram and Facebook.</div><p style="margin-top:14px">${socials("lg")}</p>`;
+  main.innerHTML = pageHead("Gallery", "Watch how we make your keepsakes, and a few we have made for families across Tamil Nadu.") + `<section class="s"><div class="wrap" id="g"></div></section>`;
+  let list = [], vids = []; try { const j = await (await fetch("gallery.json", { cache: "no-cache" })).json(); list = j.photos || []; vids = j.videos || []; } catch {}
+  $("#g").innerHTML = (vids.length ? `<h2 style="margin:0 0 16px;font-size:1.6rem">Videos</h2><div class="vgrid">${vids.map(vidCard).join("")}</div>` : "") +
+    (list.length ? `<h2 style="margin:40px 0 16px;font-size:1.6rem">Photos</h2><div class="gal">${list.map((p) => `<img loading="lazy" src="${esc(p.src)}" alt="${esc(p.alt || "Lifeimpressions casting")}">`).join("")}</div>` :
+    `<div class="note" style="margin-top:36px">More photos are coming soon. See our latest work on Instagram and Facebook.</div><p style="margin-top:14px">${socials("lg")}</p>`);
+  $$("#g .vbox[data-i]").forEach((b) => b.onclick = () => playVideo(b, vids[+b.dataset.i]));
 };
 pages.locations = () => { main.innerHTML = pageHead("Our studios", "Open Monday to Saturday, 10 AM to 5 PM. Please book a slot before you visit.") + `<section class="s"><div class="wrap"><div class="grid">${STUDIOS.map(studioCard).join("")}</div></div></section>`; };
 const IMG = (id, ext, w = 560) => `https://static.wixstatic.com/media/0eb19c_${id}~mv2.${ext}/v1/fill/w_${w},h_${w},al_c,q_80/${id}.${ext}`;
