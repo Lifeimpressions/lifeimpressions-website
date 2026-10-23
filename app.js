@@ -15,12 +15,15 @@ const STUDIOS = [
   { name: "Salem", tag: "Franchise studio", addr: "1st Floor, Srinivasa Complex, 4/2-307, Vinayagar Koil St, Opp. Valampuri, Guptha Nagar, Angammal Colony, Salem 636009", phone: "8072740743", wa: "918072740743", mail: "lifeimpressions.salem@gmail.com", who: "Prabhavathi" },
   { name: "Tirunelveli", tag: "Franchise studio", addr: "118T, B4, NGO B Colony, SBI Colony, Tirunelveli 627007", phone: "8610061063", wa: "918610061063", mail: "lifeimpressions.tirunelveli@gmail.com", who: "Meenakshi Bala" },
 ];
-const CATS = [
+const CATS = [   // shown in this order everywhere: services page, home, and the booking list
   ["Baby", /baby|infant/i, "Tiny hands and feet, kept forever."], ["Couples", /couple|marriage/i, "Two hands, one keepsake."],
+  ["Pets", /\bpet\b/i, "Paws kept forever."], ["Props", /prop/i, "Casting with special props."],
   ["Family & parents", /family|parent/i, "Everyone in one frame."], ["Pregnancy, face & lip", /belly|face|lip/i, "Moments you want to remember."],
-  ["Pets & props", /pet|prop/i, "Paws, props and personality."], ["Gifts & concepts", /voucher|clock|collectible/i, "Give the gift of a memory."],
+  ["Gifts & concepts", /voucher|clock|collectible/i, "Give the gift of a memory."],
 ];
-const catOf = (name) => (CATS.find((c) => c[1].test(name)) || ["More"])[0];
+const catOf = (name) => (/voucher/i.test(name) ? "Gifts & concepts" : /family|parent/i.test(name) ? "Family & parents" : (CATS.find((c) => c[1].test(name)) || ["More"])[0]);   // "Parent with Baby..." belongs with Family & parents
+const catRank = (name) => { const i = CATS.findIndex((c) => c[0] === catOf(name)); return i < 0 ? 99 : i; };
+const sortServices = (list) => [...list].sort((x, y) => catRank(x.name) - catRank(y.name) || Number(x.price_incl_gst) - Number(y.price_incl_gst) || x.id - y.id);
 
 // ---------- api ----------
 const api = async (path, opts) => {
@@ -29,7 +32,7 @@ const api = async (path, opts) => {
 };
 const post = (p, b) => api(p, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(b) });
 let CAT = null;
-const catalog = async () => CAT || (CAT = await api("/catalog"));
+const catalog = async () => CAT || (CAT = await api("/catalog").then((c) => ({ ...c, services: sortServices(c.services) })));
 
 // ---------- tiny view helpers ----------
 // Social icons (inline SVG, they take the text colour)
