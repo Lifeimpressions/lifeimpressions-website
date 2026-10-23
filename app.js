@@ -39,7 +39,7 @@ const catalog = async () => CAT || (CAT = await api("/catalog").then((c) => ({ .
 const ICON_IG = `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><rect x="3.5" y="3.5" width="17" height="17" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor" stroke="none"/></svg>`;
 const ICON_FB = `<svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M13.5 21v-8h2.7l.4-3.2h-3.1V7.8c0-.9.3-1.5 1.6-1.5h1.7V3.4c-.3 0-1.3-.1-2.4-.1-2.4 0-4.1 1.5-4.1 4.2v2.3H7.6V13h2.7v8h3.2z"/></svg>`;
 const socials = (cls = "") => `<span class="social ${cls}"><a href="${C.INSTAGRAM}" target="_blank" rel="noopener" aria-label="Lifeimpressions on Instagram" title="Instagram">${ICON_IG}</a><a href="${C.FACEBOOK}" target="_blank" rel="noopener" aria-label="Lifeimpressions on Facebook" title="Facebook">${ICON_FB}</a></span>`;
-// Service photos (hosted on the existing Wix media library). Keyed by service name.
+// Service photos (own storage, copied from the old Wix site). Keyed by service name.
 const SVC_IMG = {
   "baby casting - single hand or foot": "a80f9255cda74118b6ae0c7e0a13b2c4~mv2.jpeg", "baby casting - single - standard": "fa3d1699926e43f1a8b016171a9711f5~mv2_d_1536_2048_s_2.jpg",
   "baby casting - double - standard": "7500f652956042cca6cf9736cbc2f96a~mv2.jpg", "baby casting - double - customized": "9fcfa9fb34fe4796be1cbd280bb8f708~mv2.jpg",
@@ -52,7 +52,8 @@ const SVC_IMG = {
   "parent ashirwad casting": "5118ab8a8ce64a2ab548303513f7c4a0~mv2_d_2448_2152_s_2.jpg", "parent with infant casting": "148d4fa6d2cf476280bf3e5b49c6b726~mv2.jpg",
   "birthday gift voucher": "33be5d8d22574e1aa5076308a8105208~mv2_d_2480_3508_s_4_2.jpg",
 };
-const svcImg = (name, w = 640, h = 480) => { const f = SVC_IMG[String(name).trim().toLowerCase()]; return f ? `https://static.wixstatic.com/media/0eb19c_${f}/v1/fill/w_${w},h_${h},al_c,q_80,enc_auto/${f.replace(/~.*(\.\w+)$/, "$1").replace(/^/, "photo")}` : ""; };
+const MEDIA = "https://omluwmhlrvgxlqjflasm.supabase.co/storage/v1/object/public/site-media/";
+const svcImg = (name) => { const k = String(name).trim().toLowerCase(); return SVC_IMG[k] ? MEDIA + "services/" + k.replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".jpg" : ""; };
 const svcCard = (s) => { const im = svcImg(s.name); return `<a class="card link svc" href="#/book?service=${s.id}">${im ? `<div class="svc-img"><img loading="lazy" src="${im}" alt="${esc(s.name)}" onerror="this.parentNode.remove()"></div>` : ""}<div class="svc-body"><span class="tag">${esc(catOf(s.name))}</span>
   <h3 style="margin:10px 0 6px">${esc(s.name)}</h3><div class="price"><small>${s.is_from_price ? "from " : ""}</small>${inr(s.price_incl_gst)} <small>&middot; ${Number(s.duration_hours)} hr</small></div></div></a>`; };
 const loading = () => `<div class="wrap" style="padding:60px var(--gutter)"><p class="hint">Loading&hellip;</p></div>`;
@@ -116,7 +117,7 @@ pages.gallery = async () => {
   $$("#g .vbox[data-i]").forEach((b) => b.onclick = () => playVideo(b, vids[+b.dataset.i]));
 };
 pages.locations = () => { main.innerHTML = pageHead("Our studios", "Open Monday to Saturday, 10 AM to 5 PM. Please book a slot before you visit.") + `<section class="s"><div class="wrap"><div class="grid">${STUDIOS.map(studioCard).join("")}</div></div></section>`; };
-const IMG = (id, ext, w = 560) => `https://static.wixstatic.com/media/0eb19c_${id}~mv2.${ext}/v1/fill/w_${w},h_${w},al_c,q_80/${id}.${ext}`;
+const IMG = (id) => MEDIA + "shop/" + id.slice(0, 8) + ".jpg";
 const SHOP = [
   { name: "Baby Casting Kit", cat: "Baby Casting Kit", price: "From \u20B92,800", opt: "Single or Double", img: IMG("cf9664b6b8a84cde94a98869e99332db", "jpg"), alt: IMG("ea0b16356db542e3aa669c1d2a0ebd93", "png"), note: "Make your own baby hand and foot casting at home." },
   { name: "Couple Casting Kit", cat: "Couple Casting Kit", price: "\u20B92,500", img: IMG("9a20000d9e4d4e8ca57639b10aa25c6d", "jpg"), alt: IMG("21b80713b2a049a4b6305a440c80511a", "jpg"), note: "Everything you need for a couple hand casting." },
