@@ -68,7 +68,7 @@ pages.home = async () => {
     <h1>Freeze your <em>memories</em> today.</h1>
     <p class="lead">A life-size keepsake of your baby&rsquo;s tiny hands and feet, your wedding hands, your whole family. Made by hand in our studios, finished in a frame you will actually display.</p>
     <div class="cta"><a class="btn primary" href="#/book">Book a session</a><a class="btn ghost" href="#/services">See services &amp; prices</a></div>
-    <div class="proof"><span><b>50,000+</b>happy customers</span><span><b>30,000+</b>baby castings</span><span><b>12+</b>locations</span></div>
+    <div class="proof"><span><b>50,000+</b>happy customers</span><span><b>30,000+</b>baby castings</span><span><b>2+</b>locations, growing fast</span></div>
   </div>
   <form class="quick" id="quick"><h3>Check a time</h3><p class="s">Pick a studio and a service, then see open dates.</p>
     <label for="q-loc">Studio</label><select id="q-loc"></select><label for="q-svc">Service</label><select id="q-svc"></select>
