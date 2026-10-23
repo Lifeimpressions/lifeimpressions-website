@@ -120,3 +120,8 @@ footer .social a{color:#F4EEE8}footer .social a:hover{color:#1b0c00}
 .vbox{position:relative;display:block;width:100%;aspect-ratio:16/9;border:0;border-radius:var(--r);overflow:hidden;background:var(--deep);cursor:pointer;padding:0}.vbox img{width:100%;height:100%;object-fit:cover;display:block}
 .vbox iframe{position:absolute;inset:0;width:100%;height:100%;border:0}.vbox.fb:not(.playing){background:linear-gradient(135deg,#1b3a6b,#2f6fd1)}.vfb{position:absolute;left:14px;top:12px;color:#fff;font-weight:600;font-size:.9rem;opacity:.9}
 .vplay{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:rgba(255,255,255,.92);color:#1b0c00;display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);transition:transform .15s}.vbox:hover .vplay{transform:translate(-50%,-50%) scale(1.08)}
+
+.gtabs{display:flex;gap:8px;margin:0 0 22px;border-bottom:1px solid var(--line)}
+.gtabs button{background:none;border:0;border-bottom:3px solid transparent;padding:12px 18px;font:inherit;font-weight:600;font-size:1.02rem;color:var(--ink2);cursor:pointer;margin-bottom:-1px}
+.gtabs button small{font-weight:500;opacity:.7;margin-left:4px}
+.gtabs button.on{color:var(--ink);border-bottom-color:var(--orange)}

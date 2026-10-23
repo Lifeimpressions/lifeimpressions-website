@@ -111,10 +111,17 @@ const playVideo = (btn, v) => { const src = v.type === "youtube" ? `https://www.
 pages.gallery = async () => {
   main.innerHTML = pageHead("Gallery", "Watch how we make your keepsakes, and a few we have made for families across Tamil Nadu.") + `<section class="s"><div class="wrap" id="g"></div></section>`;
   let list = [], vids = []; try { const j = await (await fetch("gallery.json", { cache: "no-cache" })).json(); list = j.photos || []; vids = j.videos || []; } catch {}
-  $("#g").innerHTML = (vids.length ? `<h2 style="margin:0 0 16px;font-size:1.6rem">Videos</h2><div class="vgrid">${vids.map(vidCard).join("")}</div>` : "") +
-    (list.length ? `<h2 style="margin:40px 0 16px;font-size:1.6rem">Photos</h2><div class="gal">${list.map((p) => `<img loading="lazy" src="${esc(p.src)}" alt="${esc(p.alt || "Lifeimpressions casting")}">`).join("")}</div>` :
-    `<div class="note" style="margin-top:36px">More photos are coming soon. See our latest work on Instagram and Facebook.</div><p style="margin-top:14px">${socials("lg")}</p>`);
-  $$("#g .vbox[data-i]").forEach((b) => b.onclick = () => playVideo(b, vids[+b.dataset.i]));
+  const vidsHtml = vids.length ? `<div class="vgrid">${vids.map(vidCard).join("")}</div>` : `<div class="note">Videos are coming soon.</div>`;
+  const imgsHtml = list.length ? `<div class="gal">${list.map((p) => `<img loading="lazy" src="${esc(p.src)}" alt="${esc(p.alt || "Lifeimpressions casting")}">`).join("")}</div>` :
+    `<div class="note">More photos are coming soon. See our latest work on Instagram and Facebook.</div><p style="margin-top:14px">${socials("lg")}</p>`;
+  let tab = "videos"; try { if (sessionStorage.getItem("gtab") === "images") tab = "images"; } catch {}
+  $("#g").innerHTML = `<div class="gtabs" role="tablist"><button type="button" role="tab" data-t="videos">Videos <small>${vids.length}</small></button><button type="button" role="tab" data-t="images">Images <small>${list.length}</small></button></div><div id="gp"></div>`;
+  const show = (t) => { tab = t; try { sessionStorage.setItem("gtab", t); } catch {}
+    $$("#g .gtabs button").forEach((b) => { const on = b.dataset.t === t; b.classList.toggle("on", on); b.setAttribute("aria-selected", on); });
+    $("#gp").innerHTML = t === "videos" ? vidsHtml : imgsHtml;
+    $$("#gp .vbox[data-i]").forEach((b) => b.onclick = () => playVideo(b, vids[+b.dataset.i])); };
+  $$("#g .gtabs button").forEach((b) => b.onclick = () => show(b.dataset.t));
+  show(tab);
 };
 pages.locations = () => { main.innerHTML = pageHead("Our studios", "Open Monday to Saturday, 10 AM to 5 PM. Please book a slot before you visit.") + `<section class="s"><div class="wrap"><div class="grid">${STUDIOS.map(studioCard).join("")}</div></div></section>`; };
 const IMG = (id) => MEDIA + "shop/" + id.slice(0, 8) + ".jpg";
