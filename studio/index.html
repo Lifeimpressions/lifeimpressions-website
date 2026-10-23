@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1B2430">
+<title>Lifeimpressions Studio Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Studio Tracker">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Instrument+Sans:wght@400..700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Dark navy sidebar + light content, one bright blue accent (sampled from brand reference) */
+  --ground:#F3F5FA; --surface:#FFFFFF; --sunk:#EEF1F6; --ink:#161A2E; --ink2:#6B7280; --line:#E2E6EF;
+  --accent:#2F6FEB; --onAccent:#FFFFFF; --accentBg:#E9F1FF;
+  --gold:var(--accent); --onGold:var(--onAccent);
+  --bronze:#8A6A1F; --bronzeBg:#F3EDDD;
+  --rose:#C23D4B; --roseBg:#FAE3E6;
+  --teal:#1FA568; --tealBg:#E1F5EA;
+  --focus:#2F6FEB; --scrim:rgba(13,15,30,.55);
+  --bubbleIn:#FFFFFF; --bubbleOut:var(--accentBg); --chat:#EEF1F6;
+  --sidebar-bg:#0F102E; --sidebar-ink:#ECEEF8; --sidebar-ink2:#9195B8; --sidebar-line:rgba(255,255,255,.09); --sidebar-active:var(--accent);
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,-apple-system,'Noto Sans Tamil',sans-serif;
+  --body:'Instrument Sans','Segoe UI',system-ui,-apple-system,'Noto Sans Tamil',sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#10111C; --surface:#181A2A; --sunk:#1F2133; --ink:#ECEEF8; --ink2:#9195B8; --line:#2A2D42;
+    --accent:#5B8FF9; --onAccent:#0B1024; --accentBg:#1C2742;
+    --gold:var(--accent); --onGold:var(--onAccent);
+    --bronze:#D8B463; --bronzeBg:#302A16; --rose:#E0858C; --roseBg:#35211F; --teal:#4FC98A; --tealBg:#15301F;
+    --focus:#7EA6FF; --scrim:rgba(0,0,0,.6); --bubbleIn:#1F2133; --bubbleOut:var(--accentBg); --chat:#14151F;
+    --sidebar-bg:#07081A; --sidebar-ink:#ECEEF8; --sidebar-ink2:#80849E; --sidebar-line:rgba(255,255,255,.07); --sidebar-active:var(--accent);
+  }
+}
+html{height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--ground);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;font-weight:700;letter-spacing:-.01em;line-height:1.15}
+h1{font-size:30px} h2{font-size:19px} h3{font-size:16px}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;border-radius:6px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+.shell{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100%}
+.side{position:sticky;top:0;align-self:start;padding:0;display:flex;flex-direction:column;background:var(--sidebar-bg);min-height:100vh;color:var(--sidebar-ink)}
+.brand{background:#FFFFFF;padding:16px 14px}
+.brand img{width:100%;max-width:190px;height:auto;display:block}
+.side-body{padding:18px 14px 22px;display:flex;flex-direction:column;gap:18px}
+.side-caption{font-size:12px;color:var(--sidebar-ink2);padding:0 10px;margin-top:-6px}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:12px;padding:10px 12px;border:0;background:none;border-radius:8px;text-align:left;color:var(--sidebar-ink2);font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.06);color:var(--sidebar-ink)}
+.nav button[aria-current="page"]{background:var(--sidebar-active);color:var(--onAccent)}
+.nav svg,.tabbar svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.sidenote{margin:0 10px;padding:12px;border:1px solid var(--sidebar-line);border-radius:10px;font-size:13px;color:var(--sidebar-ink2);display:flex;flex-direction:column;gap:8px}
+.sidenote .btn.ghost{color:var(--sidebar-ink);border-color:var(--sidebar-line)}
+.sidenote .btn.ghost:hover{background:rgba(255,255,255,.08)}
+.sidenote p.small{color:var(--sidebar-ink2)}
+main{padding:22px 28px 60px;min-width:0}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:12px;justify-content:space-between;margin-bottom:22px}
+.top .who{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.field-inline{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+select,input[type=text],input[type=email],input[type=password],input[type=tel],input[type=date],input[type=time],input[type=number],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:44px;width:100%}
+.field-inline select{width:auto}
+label.f{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--ink2)}
+label.f span.h{font-weight:400}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:9px 16px;border-radius:9px;border:1px solid var(--ink);background:var(--ink);color:var(--surface);font-weight:600}
+.btn:hover{filter:brightness(1.12)}
+.btn.gold{background:var(--gold);border-color:var(--gold);color:var(--onGold)}
+.btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn.ghost:hover{background:var(--sunk)}
+.btn.sm{min-height:36px;padding:5px 12px;font-size:13.5px}
+.btn:disabled{opacity:.45;cursor:not-allowed;filter:none}
+.filebtn{position:relative;cursor:pointer}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;min-height:0;padding:0}
+.filebtn:focus-within{outline:3px solid var(--focus);outline-offset:2px}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:99px;font-size:12.5px;font-weight:600;white-space:nowrap;background:var(--sunk);color:var(--ink2)}
+.chip.late,.chip.change{background:var(--roseBg);color:var(--rose)}
+.chip.call{background:var(--rose);color:var(--surface)}
+.chip.wait{background:var(--bronzeBg);color:var(--bronze)}
+.chip.ok{background:var(--tealBg);color:var(--teal)}
+.chip.src{background:transparent;border:1px solid var(--line)}
+.muted{color:var(--ink2)}
+.small{font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spread{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.panel > h2{margin-bottom:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:18px;align-items:start}
+.stack{display:flex;flex-direction:column;gap:18px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-bottom:18px}
+.stat{padding:16px 18px;border-right:1px solid var(--line)}
+.stat:last-child{border-right:0}
+.stat b{font-family:var(--display);font-size:32px;display:block;line-height:1.1}
+.stat span{font-size:13px;color:var(--ink2)}
+.list{display:flex;flex-direction:column}
+.item{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line)}
+.item:first-child{border-top:0;padding-top:0}
+.item .t{min-width:0}
+.item .t b{display:block}
+.empty{padding:14px;border:1px dashed var(--line);border-radius:10px;color:var(--ink2);font-size:14px}
+.board{display:flex;gap:12px;overflow-x:auto;padding-bottom:14px;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.col{flex:0 0 252px;scroll-snap-align:start;background:var(--sunk);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.col header{display:flex;justify-content:space-between;align-items:baseline;padding:2px 4px 4px}
+.col header b{font-family:var(--display);font-size:14.5px}
+.col header span{font-size:12px;color:var(--ink2)}
+.card{display:flex;flex-direction:column;gap:7px;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 11px}
+.card:hover{border-color:var(--ink2)}
+.card b{font-size:14.5px}
+.card .meta{display:flex;justify-content:space-between;gap:6px;font-size:12.5px;color:var(--ink2)}
+.card .flags{display:flex;gap:5px;flex-wrap:wrap}
+.who-dot{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:11px;font-weight:700}
+.enqcol{flex:0 0 268px}
+.card.enq{cursor:default}
+.card.enq select{min-height:36px;padding:4px 8px;font-size:13.5px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.bar{display:grid;grid-template-columns:110px 1fr 74px;gap:10px;align-items:center;font-size:13.5px}
+.bar i{display:block;height:10px;border-radius:5px;background:var(--sunk);position:relative;overflow:hidden}
+.bar i u{position:absolute;inset:0 auto 0 0;background:var(--ink);border-radius:5px}
+.bar i u.g{background:var(--gold)}
+.bar span:last-child{text-align:right;color:var(--ink2)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:9px 8px;border-top:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--ink2);border-top:0;font-size:13px}
+.tablewrap{overflow-x:auto}
+table.qc td{vertical-align:middle}
+table.qc input[type=text]{min-height:36px;font-size:13.5px;padding:6px 8px}
+table.qc input[type=checkbox]{width:22px;height:22px;cursor:pointer}
+table.qc input:disabled{cursor:not-allowed;opacity:.65}
+table.qc th.qcchk,table.qc td.qcchk{text-align:center;width:88px}
+.overlay{position:fixed;inset:0;background:var(--scrim);display:flex;justify-content:flex-end;z-index:30}
+.overlay.center{justify-content:center;align-items:center;padding:16px}
+.sheet{background:var(--ground);width:min(1000px,100%);height:100%;overflow:auto;padding:20px 24px 30px}
+.dialog{background:var(--surface);width:min(620px,100%);max-height:100%;overflow:auto;border-radius:16px;padding:22px;border:1px solid var(--line)}
+.sheet:focus,.dialog:focus{outline:none}
+.jhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:16px}
+.jgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
+.facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
+.facts dt{font-size:12.5px;color:var(--ink2)}
+.facts dd{margin:0;font-weight:600}
+.track{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin:14px 0 6px}
+.track i{height:8px;border-radius:4px;background:var(--line)}
+.track i.done{background:var(--ink)}
+.track i.now{background:var(--gold)}
+.check{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
+.check:first-child{border-top:0}
+.check .l b{display:block}
+.rule{padding:10px 12px;border-radius:9px;background:var(--bronzeBg);color:var(--bronze);font-size:13.5px}
+.thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.thumbs figure{margin:0;font-size:12px;color:var(--ink2)}
+.thumbs img{display:block;width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;background:var(--sunk);border:1px solid var(--line)}
+.phone{border:8px solid var(--ink);border-radius:32px;background:var(--chat);overflow:hidden;display:flex;flex-direction:column;height:520px}
+.phone .bar1{background:var(--ink);color:var(--surface);padding:10px 14px;display:flex;gap:10px;align-items:center}
+.phone .bar1 .av{width:32px;height:32px;border-radius:50%;background:var(--gold);color:var(--onGold);display:grid;place-items:center;font-weight:800;font-family:var(--display)}
+.phone .bar1 small{display:block;opacity:.75;font-size:11.5px}
+.msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:6px}
+.dsep{align-self:center;font-size:11.5px;background:var(--surface);color:var(--ink2);padding:2px 10px;border-radius:99px;margin:6px 0}
+.b{max-width:86%;padding:8px 10px;border-radius:10px;font-size:13.5px;line-height:1.4;background:var(--bubbleIn);color:var(--ink);align-self:flex-start;border-top-left-radius:2px;white-space:pre-wrap}
+.b.in{align-self:flex-end;background:var(--bubbleOut);border-top-left-radius:10px;border-top-right-radius:2px}
+.b small{display:block;color:var(--ink2);font-size:11px;margin-top:3px}
+.phonefoot{padding:8px 10px;background:var(--surface);display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line)}
+.demo{font-size:12.5px;color:var(--ink2);margin-top:8px}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form .full{grid-column:1/-1}
+.addons{display:flex;gap:16px;flex-wrap:wrap}
+.addons label{display:flex;gap:8px;align-items:center;min-height:44px}
+.addons input{width:20px;height:20px}
+.summary{background:var(--sunk);border-radius:10px;padding:12px 14px;display:grid;gap:4px;font-size:14px}
+.summary div{display:flex;justify-content:space-between}
+.summary .tot{font-weight:700;font-size:16px;border-top:1px solid var(--line);padding-top:6px;margin-top:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--ink);color:var(--surface);padding:11px 16px;border-radius:10px;max-width:min(560px,92vw);font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast.err{background:var(--rose);color:#fff}
+.tabbar{display:none}
+.mobile-brand{display:none}
+.mscroll{display:contents}
+.center-page{min-height:100vh;display:grid;place-items:center;padding:20px}
+.login{width:min(400px,100%);display:flex;flex-direction:column;gap:16px}
+.login .msg{color:var(--rose);font-size:14px;min-height:20px}
+.busy{opacity:.6;pointer-events:none}
+@media (max-width:1100px){.jgrid{grid-template-columns:1fr}.phone{height:480px}}
+@media (max-width:880px){
+  html,body{height:100%;overflow:hidden}
+  #app{height:100%}
+  .mscroll{display:flex;flex-direction:column;height:100dvh;height:100vh}
+  .shell{grid-template-columns:1fr}
+  .side{display:none}
+  .mobile-brand{display:flex;align-items:center;justify-content:center;background:#FFFFFF;padding:8px 14px;padding-top:calc(8px + env(safe-area-inset-top,0px));flex:none;border-bottom:1px solid var(--line)}
+  .mobile-brand img{height:32px;width:auto;display:block}
+  .mscroll-body{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  main{padding:16px 14px 24px}
+  h1{font-size:25px}
+  .stats{grid-template-columns:1fr 1fr}
+  .stat:nth-child(2){border-right:0}
+  .stat:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .grid2{grid-template-columns:1fr}
+  .tabbar{display:grid;grid-template-columns:repeat(6,1fr);flex:none;background:var(--surface);border-top:1px solid var(--line);padding:6px 2px calc(6px + env(safe-area-inset-bottom,0px))}
+  .tabbar button{display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--ink2);font-size:10px;min-height:48px;padding:4px 1px;line-height:1.15}
+  .tabbar svg{width:18px;height:18px}
+  .tabbar button[aria-current="page"]{color:var(--accent);font-weight:700}
+  .sheet{padding:14px 14px 30px}
+  .form{grid-template-columns:1fr}
+  .col{flex-basis:78vw}
+  .bar{grid-template-columns:90px 1fr 64px}
+  .toast{bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script src="config.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ------------------------------------------------------------------ constants */
+var STAGE_KEYS=['booked','casting_done','awaiting_photo','finishing','layout_ready','awaiting_approval','final_fixing','quality_check','ready','delivered'];
+var STAGE_NAMES={booked:'Booked',casting_done:'Casting done',awaiting_photo:'Awaiting photo',finishing:'Curing and finishing',layout_ready:'Layout ready',awaiting_approval:'Awaiting approval',final_fixing:'Final fixing',quality_check:'Quality check',ready:'Ready',delivered:'Delivered'};
+var ENQ_STATUS=['new','contacted','quoted','booked','lost'];
+var ENQ_LABEL={new:'New',contacted:'Contacted',quoted:'Quoted',booked:'Booked',lost:'Lost'};
+var SRC_KEYS=['instagram','whatsapp','website','referral','walk_in','call','other'];
+var SRC_LABEL={instagram:'Instagram',whatsapp:'WhatsApp',website:'Website',referral:'Referral',walk_in:'Walk-in',call:'Call',other:'Other'};
+var LOST_REASONS=['Price','Date not available','Chose a competitor','No reply','Other'];
+var UPDATE_TPL=[
+  {k:'booked',l:'Booked',fn:function(j){return 'Hi '+firstName(j.customer)+', your '+j.service+' at Lifeimpressions '+j.loc+' is booked for '+fmt(j.casting_date)+', '+fmtTime(j.sessionAt)+". You can send us the photo you'd like on your keepsake here anytime.";}},
+  {k:'casting',l:'Casting done',fn:function(j){return 'Thank you, '+firstName(j.customer)+"! Your casting is done. Your keepsake will be ready in about 2 weeks and we'll update you here.";}},
+  {k:'photo',l:'Photo request',fn:function(j){return 'Hi '+firstName(j.customer)+", please send the photo you'd like used on your keepsake so we can design your layout.";}},
+  {k:'finishing',l:'Finishing',fn:function(j){return 'Hi '+firstName(j.customer)+', your cast is being cured and finished. Next, we will send you the layout to approve.';}},
+  {k:'layout',l:'Layout sent',fn:function(j){return "Here's the layout for your keepsake. Please reply APPROVE, or tell us what to change.";}},
+  {k:'approved',l:'Design approved',fn:function(j){return "Thank you! Your design is approved and we're now assembling your keepsake.";}},
+  {k:'ready',l:'Ready',fn:function(j){return 'Good news, '+firstName(j.customer)+'! Your keepsake is ready. Expected by '+fmt(j.promised_delivery)+'.';}},
+  {k:'delivered',l:'Delivered',fn:function(j){return 'Your keepsake has been delivered. We hope you love it. Thank you for choosing Lifeimpressions!';}}
+];
+var UPDATE_DEFAULT={booked:'booked',casting_done:'casting',awaiting_photo:'photo',finishing:'finishing',layout_ready:'layout',awaiting_approval:'layout',final_fixing:'approved',quality_check:'approved',ready:'ready',delivered:'delivered'};
+var QC_ITEMS=[['casting_colour','Casting colour'],['frame_colour','Frame colour'],['glass_acrylic','Glass / Acrylic'],['photo','Photo / No photo'],['gold_badge','Gold badge'],['design','Front design / Back design'],['black_tape','Black tape finished'],['hook','Hook fixed'],['bubble_wrap','Bubble wrapped'],['mount','Mount fixed']];
+var SHEET_SEARCH=[['google','Google'],['facebook','Facebook'],['instagram','Instagram'],['referral','Friends referral'],['other','Other']];
+var SHEET_DELIVERY=[['urgent','Urgent (extra charges apply)',null],['2w','2 weeks',14],['3w','3 weeks',21],['4w','4 weeks',28]];
+var SHEET_PAY=['Cash','UPI','Card','Online','Bank transfer','Pending'];
+var REMIND_MSG='Dear customer, you have enquired about our service. Would you like to book right now? Visit our website https://www.lifeimpressions.in/book-online to book your desired service. Thanks.';
+var BUCKET='job-files';
+var ICON={
+  today:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  enq:'<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.4A8 8 0 1 1 21 12z"/>',
+  jobs:'<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="10" rx="1"/><rect x="17" y="4" width="4" height="13" rx="1"/>',
+  sched:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/>',
+  reports:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  settings:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>'
+};
+var NAV=[['today','Today','today'],['jobs','Job board','jobs'],['enq','Enquiries','enq'],['sched','Schedule','sched'],['reports','Reports','reports'],['settings','Settings','settings']];
+var TITLES={today:'Today',jobs:'Job board',enq:'Enquiries',sched:'Schedule',reports:'Reports',settings:'Settings'};
+
+/* ------------------------------------------------------------------ state */
+var CFG=window.APP_CONFIG||{};
+var sb=null;
+var S={me:null,ref:{},staff:[],jobs:[],cancelled:[],enq:[],workload:[],inbox:[],historyToday:[],briefTab:null,pushState:'unknown',pushBusy:false,files:{},urls:{},msgs:{},view:'today',locFilter:'all',modal:null,toast:null,busy:false,focusModal:false};
+
+/* ------------------------------------------------------------------ helpers */
+function $(id){return document.getElementById(id);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function inr(n){return '\u20B9'+Math.round(Number(n)||0).toLocaleString('en-IN');}
+function todayISO(){return new Date(Date.now()+5.5*3600*1000).toISOString().slice(0,10);}
+function istMidnightISO(offsetDays){
+  var ist=new Date(Date.now()+5.5*3600*1000);
+  var mid=Date.UTC(ist.getUTCFullYear(),ist.getUTCMonth(),ist.getUTCDate()+(offsetDays||0),0,0,0);
+  return new Date(mid-5.5*3600*1000).toISOString();
+}
+function istHourNow(){return new Date(Date.now()+5.5*3600*1000).getUTCHours();}
+function sheetOf(j){return j.job_sheet||{};}
+function custCost(j){return parseFloat(sheetOf(j).customization_cost)||0;}
+function totalCharges(j){return j.total+custCost(j)+(j.travel||0);}
+function dueNow(j){return Math.max(0,totalCharges(j)-j.advance);}
+function chargesHtml(j){
+  var c=custCost(j),t=j.travel||0;
+  function row(l,v,strong,idv){return '<div class="spread" style="padding:3px 0'+(strong?';font-weight:700;border-top:1px solid var(--line);margin-top:4px;padding-top:6px':'')+'"><span'+(strong?'':' class="muted"')+'>'+l+'</span><span'+(idv?' id="'+idv+'"':'')+'>'+v+'</span></div>';}
+  return row('Service total (incl. 5% GST)',inr(j.total))+
+    (c>0?row('Customization cost',inr(c)):'')+
+    (t>0?row('Travel charges',inr(t)):'')+
+    row('Total charges',inr(totalCharges(j)),true)+
+    row('Advance paid','\u2212'+inr(j.advance))+
+    row('Balance due',inr(dueNow(j)),true,'dt-balance');
+}
+function sheetAnswered(j){var sh=sheetOf(j);return Object.keys(sh).some(function(k){return sh[k]!==''&&sh[k]!==false&&sh[k]!=null;});}
+function sheetChip(j){var sh=sheetOf(j);return sh.agreed?{c:'ok',t:'Agreed'}:(sheetAnswered(j)?{c:'wait',t:'In progress'}:{c:'',t:'Not filled'});}
+function updateSheetLive(j){
+  var ch=$('sh-chip'),st=sheetChip(j);if(ch){ch.className='chip '+st.c;ch.textContent=st.t;}
+  var b1=$('sh-balance'),ch=$('dt-charges');if(b1)b1.textContent=inr(dueNow(j));if(ch)ch.innerHTML=chargesHtml(j);
+}
+async function saveSheet(j,patch){
+  var old=j.job_sheet||{},next=Object.assign({},old,patch),oldProm=j.promised_delivery;
+  j.job_sheet=next;j.promised_delivery=next.delivery_date||j.promised_db;
+  updateSheetLive(j);
+  var r=await sb.from('jobs').update({job_sheet:next}).eq('id',j.id);
+  if(r.error){
+    j.job_sheet=old;j.promised_delivery=oldProm;render();
+    fail(/job_sheet/.test(r.error.message||'')?{message:'Run 09_job_sheet.sql in Supabase first, then try again.'}:r.error);
+  }
+}
+function qcCount(j){var c=j.qc_checks||{};return QC_ITEMS.filter(function(it){return c[it[0]]&&c[it[0]].ok;}).length;}
+function qcComplete(j){return qcCount(j)===QC_ITEMS.length;}
+function firstName(n){return String(n||'').trim().split(/[\s&]+/)[0]||'there';}
+function tplFor(k){return UPDATE_TPL.filter(function(t){return t.k===k;})[0]||UPDATE_TPL[0];}
+function waLink(phone,text){
+  var d=String(phone||'').replace(/\D/g,'');
+  if(!d)return null;
+  if(d.length===10)d='91'+d;
+  return 'https://wa.me/'+d+'?text='+encodeURIComponent(text);
+}
+function staffName(id){var s=(S.staff||[]).filter(function(x){return x.id===id;})[0];return s?s.name:'System';}
+function addISO(iso,n){var d=new Date(iso+'T00:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);}
+function diffISO(a,b){return Math.round((new Date(a+'T00:00:00Z')-new Date(b+'T00:00:00Z'))/86400000);}
+function dt(iso){return iso&&iso.length===10?new Date(iso+'T00:00:00'):new Date(iso);}
+function fmt(iso){return iso?dt(iso).toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'}):'';}
+function fmtShort(iso){return iso?dt(iso).toLocaleDateString('en-IN',{day:'numeric',month:'short'}):'';}
+function fmtTime(iso){return new Date(iso).toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata'});}
+function idx(list,key){var m={};(list||[]).forEach(function(x){m[x[key||'id']]=x;});return m;}
+function isAdmin(){return S.me&&S.me.role==='admin';}
+function shortSvc(s){return String(s||'').replace('Baby Casting - ','Baby ').replace(' Casting','');}
+function svg(k){return '<svg viewBox="0 0 24 24" aria-hidden="true">'+ICON[k]+'</svg>';}
+function chip(f){return '<span class="chip '+f.t+'">'+esc(f.l)+'</span>';}
+function ini(name){return '<span class="who-dot" title="'+esc(name)+'">'+esc(String(name||'?').charAt(0))+'</span>';}
+function stageIdx(j){return STAGE_KEYS.indexOf(j.stage);}
+function scopeLoc(){if(S.me&&S.me.role!=='admin')return S.me.location_id;return S.locFilter==='all'?null:Number(S.locFilter);}
+function vJobs(){var l=scopeLoc();return S.jobs.filter(function(j){return !l||j.location_id===l;});}
+function vEnq(){var l=scopeLoc();return S.enq.filter(function(x){return !l||x.location_id===l;});}
+function jobById(id){return S.jobs.filter(function(j){return j.id===id;})[0];}
+function enqById(id){return S.enq.filter(function(x){return x.id===id;})[0];}
+function locName(id){var l=(S.ref.locations||[]).filter(function(x){return x.id===id;})[0];return l?l.name:'';}
+function jobFiles(j,kind){return (S.files[j.id]||[]).filter(function(f){return !kind||f.kind===kind;});}
+function toast(msg,err){
+  S.toast={msg:msg,err:!!err};
+  var old=$('toast');if(old)old.remove();
+  var el=document.createElement('div');el.id='toast';el.className='toast'+(err?' err':'');el.setAttribute('role','status');el.textContent=msg;
+  document.body.appendChild(el);
+  clearTimeout(toast.t);toast.t=setTimeout(function(){S.toast=null;var e=$('toast');if(e)e.remove();},4200);
+}
+function fail(e){toast((e&&e.message)?e.message:String(e),true);}
+function pushSupported(){return 'serviceWorker' in navigator && 'PushManager' in window && !!(CFG.VAPID_PUBLIC_KEY) && CFG.VAPID_PUBLIC_KEY.indexOf('YOUR-')!==0;}
+function iosNeedsHomeScreen(){
+  var ua=navigator.userAgent||'';
+  var isIOS=/iPhone|iPad|iPod/.test(ua) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+  var standalone=('standalone' in navigator && navigator.standalone) || window.matchMedia('(display-mode: standalone)').matches;
+  return isIOS && !standalone;
+}
+function b64urlToBytes(s){
+  var pad='='.repeat((4-s.length%4)%4);
+  var b=(s+pad).replace(/-/g,'+').replace(/_/g,'/');
+  var raw=atob(b),out=new Uint8Array(raw.length);
+  for(var i=0;i<raw.length;i++)out[i]=raw.charCodeAt(i);
+  return out;
+}
+async function refreshPushState(){
+  if(!pushSupported()){S.pushState=iosNeedsHomeScreen()?'ios-need-home-screen':'unsupported';return;}
+  try{
+    var reg=await navigator.serviceWorker.register('sw.js');
+    var sub=await reg.pushManager.getSubscription();
+    S.pushState=sub?'on':(Notification.permission==='denied'?'denied':'off');
+  }catch(e){S.pushState='unsupported';}
+}
+async function enablePush(){
+  if(S.pushBusy)return;S.pushBusy=true;render();
+  try{
+    var reg=await navigator.serviceWorker.register('sw.js');
+    var perm=await Notification.requestPermission();
+    if(perm!=='granted'){S.pushState=perm==='denied'?'denied':'off';S.pushBusy=false;render();return;}
+    var sub=await reg.pushManager.getSubscription();
+    if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64urlToBytes(CFG.VAPID_PUBLIC_KEY)});
+    var j=sub.toJSON();
+    var r=await sb.from('push_subscriptions').insert({staff_id:S.me.id,endpoint:j.endpoint,p256dh:j.keys.p256dh,auth:j.keys.auth});
+    if(r.error && r.error.code!=='23505')throw r.error;
+    S.pushState='on';toast('Daily reminders are on for this device.');
+  }catch(e){fail(e);}
+  S.pushBusy=false;render();
+}
+async function disablePush(){
+  if(S.pushBusy)return;S.pushBusy=true;render();
+  try{
+    var reg=await navigator.serviceWorker.getRegistration();
+    var sub=reg?await reg.pushManager.getSubscription():null;
+    if(sub){await sb.from('push_subscriptions').delete().eq('endpoint',sub.endpoint);await sub.unsubscribe();}
+    S.pushState='off';toast('Daily reminders turned off for this device.');
+  }catch(e){fail(e);}
+  S.pushBusy=false;render();
+}
+
+/* ------------------------------------------------------------------ boot */
+function boot(){
+  var app=$('app');
+  var bad=!CFG.SUPABASE_URL||!CFG.SUPABASE_ANON_KEY||String(CFG.SUPABASE_URL).indexOf('YOUR-')===0;
+  if(bad){app.innerHTML='<div class="center-page"><div class="login"><h1>Set up needed</h1><p class="muted">Open <b>config.js</b> and paste your Supabase Project URL and anon key (Supabase, Project Settings, API). Then reload this page.</p></div></div>';return;}
+  if(!window.supabase||!window.supabase.createClient){app.innerHTML='<div class="center-page"><div class="login"><h1>Could not load</h1><p class="muted">The Supabase library did not load. Check your internet connection and reload.</p></div></div>';return;}
+  sb=window.supabase.createClient(CFG.SUPABASE_URL,CFG.SUPABASE_ANON_KEY);
+  sb.auth.getSession().then(function(r){
+    if(r.data&&r.data.session)start(r.data.session);else renderLogin('');
+  });
+  sb.auth.onAuthStateChange(function(ev){if(ev==='SIGNED_OUT'){S.me=null;renderLogin('');}});
+  setInterval(function(){if(S.me&&!S.modal&&!S.busy&&document.visibilityState==='visible')loadAll(true);},60000);
+}
+function renderLogin(msg){
+  $('app').innerHTML='<div class="center-page"><form class="login" id="loginform"><div><h1>Lifeimpressions</h1><p class="muted">Studio tracker. Sign in with the email and password you were given.</p></div>'+
+    '<label class="f">Email<input type="email" id="lg-email" autocomplete="username" required></label>'+
+    '<label class="f">Password<input type="password" id="lg-pass" autocomplete="current-password" required></label>'+
+    '<div class="msg" id="lg-msg" role="alert">'+esc(msg)+'</div><button class="btn gold" type="submit">Sign in</button></form></div>';
+  var f=$('lg-email');if(f)f.focus();
+}
+async function doLogin(){
+  var email=$('lg-email').value.trim(),pass=$('lg-pass').value;
+  $('lg-msg').textContent='Signing in...';
+  var r=await sb.auth.signInWithPassword({email:email,password:pass});
+  if(r.error){$('lg-msg').textContent='Could not sign in. Check the email and password.';return;}
+  start(r.data.session);
+}
+async function start(session){
+  var r=await sb.from('staff').select('*').eq('user_id',session.user.id).maybeSingle();
+  if(r.error||!r.data||!r.data.active){
+    $('app').innerHTML='<div class="center-page"><div class="login"><h1>Not set up yet</h1><p class="muted">You are signed in, but your login is not linked to a staff record. Ask Keerthi to add you, then sign in again.</p><button class="btn ghost" data-a="signout">Sign out</button></div></div>';
+    return;
+  }
+  S.me=r.data;
+  if(location.hash==='#today'){S.view='today';history.replaceState(null,'',location.pathname+location.search);}
+  render();
+  refreshPushState().then(render);
+  await loadAll(false);
+}
+
+/* ------------------------------------------------------------------ data loading */
+function q(p){return p.then(function(r){if(r.error)throw r.error;return r.data||[];});}
+async function loadAll(silent){
+  if(!silent){S.busy=true;render();}
+  try{
+    var r=await Promise.all([
+      q(sb.from('locations').select('*').order('id')),
+      q(sb.from('services').select('*').order('id')),
+      q(sb.from('frame_sizes').select('*').order('id')),
+      q(sb.from('addons').select('*').order('id')),
+      q(sb.from('stage_settings').select('*').order('sort_order')),
+      q(sb.from('staff').select('*').order('name')),
+      q(sb.from('customers').select('*')),
+      q(sb.from('orders').select('*')),
+      q(sb.from('order_addons').select('*')),
+      q(sb.from('jobs').select('*').order('created_at',{ascending:false})),
+      q(sb.from('v_job_status').select('*')),
+      q(sb.from('job_files').select('*').order('created_at')),
+      q(sb.from('enquiries').select('*').order('created_at',{ascending:false})),
+      q(sb.from('v_workload').select('*')),
+      S.me.role==='admin'?q(sb.from('booking_inbox').select('*').eq('status','failed').order('received_at',{ascending:false})):Promise.resolve([]),
+      q(sb.from('job_stage_history').select('*').gte('changed_at',istMidnightISO(0)).lt('changed_at',istMidnightISO(1)).order('changed_at')),
+      q(sb.from('site_bookings').select('*').order('start_at',{ascending:false}).limit(300)).catch(function(){return [];}),
+      q(sb.from('blocked_dates').select('*').order('day')).catch(function(){return [];})
+    ]);
+    S.ref={locations:r[0],services:r[1],frames:r[2],addons:r[3],stages:r[4]};
+    S.staff=r[5];
+    var cust=idx(r[6]),ord=idx(r[7]),svc=idx(r[1]),fr=idx(r[2]),loc=idx(r[0]),stf=idx(r[5]),ad=idx(r[3]),vs=idx(r[10]);
+    var byOrder={};r[8].forEach(function(x){(byOrder[x.order_id]=byOrder[x.order_id]||[]).push((ad[x.addon_id]||{}).name);});
+    var stg=idx(r[4],'stage');
+    S.cancelled=r[9].filter(function(j){return j.cancelled_at;}).map(function(j){
+      var o=ord[j.order_id]||{},c=cust[o.customer_id]||{},sv=svc[o.service_id]||{};
+      return Object.assign({},j,{customer:c.name||'Unknown',service:sv.name||'',loc:(loc[j.location_id]||{}).name||''});
+    });
+    S.jobs=r[9].filter(function(j){return !j.cancelled_at;}).map(function(j){
+      var o=ord[j.order_id]||{},c=cust[o.customer_id]||{},v=vs[j.id]||{},s=svc[o.service_id]||{};
+      return Object.assign({},j,{
+        customer:c.name||'Unknown',phone:c.whatsapp||'',customerId:c.id,email:c.email||'',address:c.address||'',sessionAddress:o.session_address||'',promised_db:j.promised_delivery,promised_delivery:((j.job_sheet||{}).delivery_date||j.promised_delivery),service:s.name||'',hours:s.duration_hours,qcList:!!s.qc_checklist,
+        frame:(fr[o.frame_size_id]||{}).name||'',addons:byOrder[j.order_id]||[],
+        total:Number(o.price_incl_gst)||0,advance:Number(o.advance_paid)||0,travel:Number(o.travel_charges)||0,sessionAt:o.session_at,
+        loc:(loc[j.location_id]||{}).name||'',assignee:(stf[j.assigned_to]||{}).name||'Unassigned',
+        day_no:v.day_no==null?0:Number(v.day_no),overdue:!!v.overdue,photo_missing:!!v.photo_missing,call_photo:!!v.call_photo,
+        call_approval:!!v.call_approval,changes_requested:!!v.changes_requested,waiting_on_customer:!!v.waiting_on_customer,
+        complete_by:(stg[j.stage]||{}).complete_by_day
+      });
+    });
+    S.files={};r[11].forEach(function(f){(S.files[f.job_id]=S.files[f.job_id]||[]).push(f);});
+    S.enq=r[12].map(function(e){var sv=svc[e.service_id]||{};return Object.assign({},e,{service:sv.name||'',loc:(loc[e.location_id]||{}).name||''});});
+    S.workload=r[13];
+    S.inbox=r[14]||[];
+    S.historyToday=r[15]||[];
+    S.site=(r[16]||[]).map(function(b){var sv=svc[b.service_id]||{};return Object.assign({},b,{service:sv.name||'',loc:(loc[b.location_id]||{}).name||''});});
+    S.blocked=(r[17]||[]).map(function(b){return Object.assign({},b,{loc:(loc[b.location_id]||{}).name||''});});
+    if(!S.briefTab)S.briefTab=istHourNow()<13?'morning':'evening';
+    if(S.modal&&S.modal.type==='job'){ensureUrls(jobById(S.modal.id));loadMsgs(S.modal.id);}
+  }catch(e){fail(e);}
+  S.busy=false;render();
+}
+async function ensureUrls(j){
+  if(!j)return;
+  var need=jobFiles(j).filter(function(f){return !S.urls[f.storage_path];});
+  if(!need.length)return;
+  await Promise.all(need.map(async function(f){
+    var r=await sb.storage.from(BUCKET).createSignedUrl(f.storage_path,3600);
+    if(r.data&&r.data.signedUrl)S.urls[f.storage_path]=r.data.signedUrl;
+  }));
+  render();
+}
+async function loadMsgs(id){
+  var r=await sb.from('message_log').select('*').eq('job_id',id).order('created_at');
+  if(!r.error){S.msgs[id]=r.data||[];render();}
+}
+
+/* ------------------------------------------------------------------ status rules (from the database view) */
+function flags(j){
+  var f=[];if(j.stage==='delivered')return f;
+  if(j.overdue){
+    if(j.stage==='booked')f.push({t:'late',l:'Session passed'});
+    else f.push({t:'late',l:'Overdue '+Math.max(1,j.day_no-(j.complete_by==null?0:j.complete_by))+'d'});
+  }
+  if(j.changes_requested)f.push({t:'change',l:'Changes requested'});
+  if(j.call_photo)f.push({t:'call',l:'Call: no photo'});
+  else if(j.photo_missing&&j.day_no>=1)f.push({t:'wait',l:'Photo missing'});
+  if(j.approval==='pending'){if(j.call_approval)f.push({t:'call',l:'Call: no approval'});else f.push({t:'wait',l:'Awaiting approval'});}
+  return f;
+}
+function dayText(j){var d=j.day_no;return d<0?'In '+(-d)+' day'+(d===-1?'':'s'):(d===0?'Session today':'Day '+d);}
+function needs(list){
+  var out=[];
+  (list||vJobs()).forEach(function(j){
+    if(j.stage==='delivered')return;
+    var fl=flags(j),rank=9;
+    fl.forEach(function(f){if(f.t==='call')rank=Math.min(rank,0);if(f.t==='late')rank=Math.min(rank,1);if(f.t==='change')rank=Math.min(rank,2);});
+    var reasons=fl.filter(function(f){return f.t!=='wait';});
+    if(j.stage==='booked'&&j.day_no===0){reasons.push({t:'ok',l:'Casting session today'});rank=Math.min(rank,3);}
+    if(j.stage==='layout_ready'){reasons.push({t:'ok',l:'Layout ready to send'});rank=Math.min(rank,3);}
+    if(j.stage==='quality_check'&&!j.qc_approved){reasons.push({t:'ok',l:'QC pending'});rank=Math.min(rank,3);}
+    if(reasons.length)out.push({j:j,reasons:reasons,rank:rank});
+  });
+  out.sort(function(a,b){return a.rank-b.rank;});
+  return out;
+}
+function locationsInScope(){
+  if(isAdmin())return (S.ref.locations||[]).filter(function(l){return S.locFilter==='all'||l.id===Number(S.locFilter);});
+  return (S.ref.locations||[]).filter(function(l){return l.id===S.me.location_id;});
+}
+function personFor(locId){var s=S.staff.filter(function(x){return x.location_id===locId&&x.active;})[0];return s?s.name:'Unassigned';}
+function morningPlan(locId){
+  var t=todayISO(),jobs=S.jobs.filter(function(j){return j.location_id===locId&&j.stage!=='delivered';});
+  return {
+    sessions:jobs.filter(function(j){return j.stage==='booked'&&j.casting_date===t;}).sort(function(a,b){return a.sessionAt<b.sessionAt?-1:1;}),
+    need:needs(jobs),
+    fu:S.enq.filter(function(x){return x.location_id===locId&&x.next_follow_up&&x.next_follow_up<=t&&x.status!=='booked'&&x.status!=='lost';}),
+    due:jobs.filter(function(j){return j.stage!=='booked'&&diffISO(j.promised_delivery,t)<=1;})
+  };
+}
+function eveningReview(locId){
+  var t=todayISO(),tmr=addISO(t,1);
+  var jobs=S.jobs.filter(function(j){return j.location_id===locId;});
+  return {
+    done:S.historyToday.filter(function(h){return h.location_id===locId;}).map(function(h){return {job:jobById(h.job_id),from:h.from_stage,to:h.to_stage,at:h.changed_at,who:staffName(h.changed_by)};}).filter(function(x){return x.job;}),
+    open:needs(jobs.filter(function(j){return j.stage!=='delivered';})),
+    tomorrowSessions:jobs.filter(function(j){return j.stage==='booked'&&j.casting_date===tmr;}).sort(function(a,b){return a.sessionAt<b.sessionAt?-1:1;}),
+    tomorrowFu:S.enq.filter(function(x){return x.location_id===locId&&x.next_follow_up===tmr;})
+  };
+}
+function actionLabel(j){
+  switch(j.stage){
+    case 'booked':return 'Mark casting done';
+    case 'casting_done':return j.photo_received_at?'Start finishing':'Request photo';
+    case 'awaiting_photo':return 'Start finishing';
+    case 'finishing':return 'Layout designed';
+    case 'layout_ready':return 'Send layout to customer';
+    case 'awaiting_approval':return j.approval==='changes'?'Send revised layout':'';
+    case 'final_fixing':return 'Move to quality check';
+    case 'quality_check':return 'Mark ready';
+    case 'ready':return 'Mark delivered';
+    default:return '';
+  }
+}
+
+/* ------------------------------------------------------------------ actions */
+async function upd(id,patch){var r=await sb.from('jobs').update(patch).eq('id',id);if(r.error)throw r.error;}
+async function refreshAfter(msg){await loadAll(true);if(msg)toast(msg);}
+async function advance(j){
+  try{
+    switch(j.stage){
+      case 'booked':
+        if(j.day_no<0){toast('The session is on '+fmt(j.casting_date)+'. Casting can be marked done from that day.',true);return;}
+        await upd(j.id,{stage:'casting_done'});break;
+      case 'casting_done':await upd(j.id,{stage:j.photo_received_at?'finishing':'awaiting_photo'});break;
+      case 'awaiting_photo':await upd(j.id,{stage:'finishing'});break;
+      case 'finishing':
+        if(!j.photo_received_at){toast('The layout cannot be designed without the customer photo. Once the photo is received, it will unlock.',true);return;}
+        await upd(j.id,{stage:'layout_ready'});break;
+      case 'layout_ready':
+        if(!jobFiles(j,'layout').length){toast('Upload the layout first.',true);return;}
+        await upd(j.id,{stage:'awaiting_approval'});break;
+      case 'awaiting_approval':
+        if(j.approval!=='changes'){toast('Waiting for the customer to approve.');return;}
+        var ls=jobFiles(j,'layout'),last=ls[ls.length-1];
+        if(!last||(j.layout_sent_at&&new Date(last.created_at)<=new Date(j.layout_sent_at))){toast('Upload the revised layout first.',true);return;}
+        await upd(j.id,{approval:'pending'});break;
+      case 'final_fixing':await upd(j.id,{stage:'quality_check'});break;
+      case 'quality_check':
+        if(!j.qc_approved){toast('Quality check must be approved by head office first.',true);return;}
+        await upd(j.id,{stage:'ready'});break;
+      case 'ready':await upd(j.id,{stage:'delivered'});break;
+      default:return;
+    }
+    await refreshAfter(j.job_no+' updated.');
+    loadMsgs(j.id);
+  }catch(e){fail(e);}
+}
+function compress(file){
+  return new Promise(function(res,rej){
+    var img=new Image(),url=URL.createObjectURL(file);
+    img.onload=function(){
+      var max=1600,w=img.naturalWidth,h=img.naturalHeight,s=Math.min(1,max/Math.max(w,h));
+      w=Math.round(w*s);h=Math.round(h*s);
+      var c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+      c.toBlob(function(b){URL.revokeObjectURL(url);b?res(b):rej(new Error('Could not process the image.'));},'image/jpeg',0.8);
+    };
+    img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('That file is not an image.'));};
+    img.src=url;
+  });
+}
+async function uploadFile(j,kind,file){
+  S.busy=true;render();
+  try{
+    var blob=await compress(file);
+    var path=j.location_id+'/'+j.id+'/'+kind+'-'+Date.now()+'.jpg';
+    var up=await sb.storage.from(BUCKET).upload(path,blob,{contentType:'image/jpeg',upsert:false});
+    if(up.error)throw up.error;
+    var ins=await sb.from('job_files').insert({job_id:j.id,kind:kind,storage_path:path});
+    if(ins.error)throw ins.error;
+    if(kind==='photo'&&!j.photo_received_at)await upd(j.id,{photo_received_at:new Date().toISOString()});
+    await loadAll(true);
+    toast('Uploaded.');
+  }catch(e){S.busy=false;fail(e);return;}
+  S.busy=false;render();
+}
+
+/* ------------------------------------------------------------------ views */
+function briefRow(icon,text,extra){return '<div class="item"><div class="t"><b>'+text+'</b>'+(extra?'<span class="muted small">'+extra+'</span>':'')+'</div></div>';}
+function vDailyBrief(){
+  var locs=locationsInScope();
+  var h='<div class="panel" style="margin-bottom:18px"><div class="spread"><h2>Daily plan</h2><div class="row" style="gap:6px">'+
+    '<button class="btn sm '+(S.briefTab==='morning'?'gold':'ghost')+'" data-a="brief-tab" data-v="morning">Morning plan</button>'+
+    '<button class="btn sm '+(S.briefTab==='evening'?'gold':'ghost')+'" data-a="brief-tab" data-v="evening">Evening close-out</button></div></div>';
+  if(!locs.length)h+='<div class="empty">No location to show.</div>';
+  locs.forEach(function(loc,i){
+    h+='<div style="margin-top:'+(i?'18':'14')+'px;'+(i?'padding-top:14px;border-top:1px solid var(--line)':'')+'"><div class="spread"><h3>'+esc(loc.name)+'</h3><span class="muted small">'+esc(personFor(loc.id))+'</span></div>';
+    if(S.briefTab==='morning'){
+      var p=morningPlan(loc.id);
+      h+='<p class="small muted" style="margin-top:8px">Today\u2019s sessions</p>';
+      h+=p.sessions.length?'<div class="list">'+p.sessions.map(function(j){return briefRow(0,esc(fmtTime(j.sessionAt))+' \u00B7 '+esc(j.customer),esc(shortSvc(j.service)));}).join('')+'</div>':'<div class="empty">No sessions today.</div>';
+      h+='<p class="small muted" style="margin-top:12px">Needs attention ('+p.need.length+')</p>';
+      h+=p.need.length?'<div class="list">'+p.need.slice(0,6).map(function(n){return briefRow(0,esc(n.j.customer)+' \u00B7 '+esc(STAGE_NAMES[n.j.stage]),n.reasons.map(chip).join(' '));}).join('')+'</div>':'<div class="empty">Nothing outstanding.</div>';
+      if(p.fu.length)h+='<p class="small muted" style="margin-top:12px">Follow-ups due ('+p.fu.length+')</p><div class="list">'+p.fu.map(function(x){return briefRow(0,esc(x.name),esc(shortSvc(x.service)));}).join('')+'</div>';
+      if(p.due.length)h+='<p class="small muted" style="margin-top:12px">Deliveries due today or tomorrow ('+p.due.length+')</p><div class="list">'+p.due.map(function(j){return briefRow(0,esc(j.customer),esc(fmt(j.promised_delivery)));}).join('')+'</div>';
+    }else{
+      var e=eveningReview(loc.id);
+      h+='<p class="small muted" style="margin-top:8px">Moved forward today ('+e.done.length+')</p>';
+      h+=e.done.length?'<div class="list">'+e.done.map(function(x){return briefRow(0,esc(x.job.customer)+': '+esc(STAGE_NAMES[x.from]||'New')+' \u2192 '+esc(STAGE_NAMES[x.to]),esc(x.who)+' \u00B7 '+esc(fmtTime(x.at)));}).join('')+'</div>':'<div class="empty">No stage changes yet today.</div>';
+      h+='<p class="small muted" style="margin-top:12px">Still open ('+e.open.length+')</p>';
+      h+=e.open.length?'<div class="list">'+e.open.slice(0,6).map(function(n){return briefRow(0,esc(n.j.customer)+' \u00B7 '+esc(STAGE_NAMES[n.j.stage]),n.reasons.map(chip).join(' '));}).join('')+'</div>':'<div class="empty">Nothing left open.</div>';
+      h+='<p class="small muted" style="margin-top:12px">Tomorrow\u2019s sessions ('+e.tomorrowSessions.length+')</p>';
+      h+=e.tomorrowSessions.length?'<div class="list">'+e.tomorrowSessions.map(function(j){return briefRow(0,esc(fmtTime(j.sessionAt))+' \u00B7 '+esc(j.customer),esc(shortSvc(j.service)));}).join('')+'</div>':'<div class="empty">Nothing booked yet.</div>';
+      if(e.tomorrowFu.length)h+='<p class="small muted" style="margin-top:12px">Follow-ups due tomorrow ('+e.tomorrowFu.length+')</p><div class="list">'+e.tomorrowFu.map(function(x){return briefRow(0,esc(x.name),esc(shortSvc(x.service)));}).join('')+'</div>';
+    }
+    h+='</div>';
+  });
+  return h+'</div>';
+}
+function vToday(){
+  var jobs=vJobs(),active=jobs.filter(function(j){return j.stage!=='delivered';});
+  var wait=active.filter(function(j){return j.waiting_on_customer;}).length;
+  var t=todayISO();
+  var due=active.filter(function(j){return j.stage!=='booked'&&diffISO(j.promised_delivery,t)<=7;}).length;
+  var fu=vEnq().filter(function(x){return x.next_follow_up&&x.next_follow_up<=t&&x.status!=='booked'&&x.status!=='lost';});
+  var nd=needs();
+  var h=vPushBanner()+vDailyBrief();
+  if(isAdmin()&&S.inbox.length){
+    h+='<div class="panel" style="margin-bottom:18px;border-color:var(--rose)"><h2>Website bookings needing attention</h2><p class="muted small" style="margin-bottom:10px">These came from the website but could not become a job automatically.</p><div class="list">'+
+      S.inbox.map(function(x){var p=x.payload||{};return '<div class="item"><div class="t"><b>'+esc(p.customer_name||'Unknown customer')+'</b><span class="muted small">'+esc(p.service||'')+' \u00B7 '+esc(p.location||'')+' \u00B7 '+esc(x.received_at?fmtShort(String(x.received_at).slice(0,10)):'')+'</span><div class="row" style="margin-top:6px"><span class="chip late">'+esc(x.error||'Failed')+'</span></div></div><div class="row"><button class="btn sm gold" data-a="inbox-book" data-id="'+x.id+'">Enter as booking</button><button class="btn sm ghost" data-a="inbox-dismiss" data-id="'+x.id+'">Dismiss</button></div></div>';}).join('')+'</div></div>';
+  }
+  var sc=(S.site||[]).filter(function(b){return b.needs_staff_cancel;});
+  if(sc.length){
+    h+='<div class="panel" style="margin-bottom:18px;border-color:var(--rose)"><h2>Customers who cancelled online</h2><p class="muted small" style="margin-bottom:10px">These customers cancelled from the website. Please cancel the job here so it leaves the board. The advance is not refunded automatically.</p><div class="list">'+
+      sc.map(function(b){var jb=jobById(b.job_id);return '<div class="item"><div class="t"><b>'+esc(b.customer_name)+'</b><span class="muted small">'+esc(b.service)+' \u00B7 '+esc(b.loc)+' \u00B7 '+esc(fmtWhen(b.start_at))+' \u00B7 paid '+inr(b.advance)+'</span></div><div class="row">'+(jb?'<button class="btn sm gold" data-a="cancel-booking" data-id="'+jb.id+'">Cancel job</button>':'')+'<button class="btn sm ghost" data-a="site-ack" data-id="'+b.id+'">Done</button></div></div>';}).join('')+'</div></div>';
+  }
+  h+='<div class="stats"><div class="stat"><b>'+active.length+'</b><span>Active jobs</span></div><div class="stat"><b>'+wait+'</b><span>Waiting on customer</span></div><div class="stat"><b>'+due+'</b><span>Deliveries due in 7 days</span></div><div class="stat"><b>'+fu.length+'</b><span>Follow-ups due</span></div></div>';
+  h+='<div class="grid2"><div class="panel"><h2>Needs you now</h2>';
+  if(!nd.length)h+='<div class="empty">Nothing needs action right now.</div>';
+  else{h+='<div class="list">';nd.forEach(function(n){
+    h+='<div class="item"><div class="t"><b>'+esc(n.j.customer)+'</b><span class="muted small">'+esc(shortSvc(n.j.service))+' \u00B7 '+esc(n.j.loc)+' \u00B7 '+esc(STAGE_NAMES[n.j.stage])+'</span><div class="row" style="margin-top:6px">'+n.reasons.map(chip).join('')+'</div></div><button class="btn sm ghost" data-a="open-job" data-id="'+n.j.id+'">Open</button></div>';});h+='</div>';}
+  h+='</div><div class="stack"><div class="panel"><h2>Follow-ups due</h2>';
+  if(!fu.length)h+='<div class="empty">No follow-ups due today.</div>';
+  else{h+='<div class="list">';fu.forEach(function(x){var late=x.next_follow_up<t;
+    h+='<div class="item"><div class="t"><b>'+esc(x.name)+'</b><span class="muted small">'+esc(shortSvc(x.service))+' \u00B7 '+esc(SRC_LABEL[x.source])+' \u00B7 '+esc(ENQ_LABEL[x.status])+'</span></div>'+(late?'<span class="chip late">Overdue</span>':'<span class="chip">Today</span>')+'</div>';});h+='</div>';}
+  h+='</div><div class="panel"><h2>Coming up</h2>';
+  var up=active.filter(function(j){return j.stage==='booked';}).sort(function(a,b){return a.casting_date<b.casting_date?-1:1;}).slice(0,4);
+  if(!up.length)h+='<div class="empty">No sessions booked yet.</div>';
+  else{h+='<div class="list">';up.forEach(function(j){h+='<div class="item"><div class="t"><b>'+esc(j.customer)+'</b><span class="muted small">'+esc(shortSvc(j.service))+' \u00B7 '+esc(j.loc)+'</span></div><span class="chip">'+esc(fmt(j.casting_date))+'</span></div>';});h+='</div>';}
+  return h+'</div></div></div>';
+}
+function jobCard(j){
+  var fl=flags(j);
+  return '<button class="card" data-a="open-job" data-id="'+j.id+'"><b>'+esc(j.customer)+'</b><span class="meta"><span>'+esc(shortSvc(j.service))+'</span></span>'+
+    '<span class="meta"><span class="row" style="gap:6px">'+ini(j.assignee)+esc(j.loc)+'</span><span>'+esc(dayText(j))+'</span></span>'+
+    (fl.length?'<span class="flags">'+fl.map(chip).join('')+'</span>':'')+'</button>';
+}
+function vBoard(){
+  var jobs=vJobs(),stg=idx(S.ref.stages||[],'stage'),h='<div class="board" id="board">';
+  STAGE_KEYS.forEach(function(k,i){
+    var list=jobs.filter(function(j){return j.stage===k;}),by=(stg[k]||{}).complete_by_day;
+    h+='<section class="col" aria-label="'+esc(STAGE_NAMES[k])+'"><header><b>'+esc(STAGE_NAMES[k])+'</b><span>'+list.length+(by!=null&&i>0?' \u00B7 by day '+by:'')+'</span></header>';
+    h+=list.length?list.map(jobCard).join(''):'<div class="small muted" style="padding:6px 4px">No jobs</div>';
+    h+='</section>';
+  });
+  return h+'</div>';
+}
+function enqCard(x){
+  var t=todayISO(),late=x.next_follow_up&&x.next_follow_up<t;
+  var h='<div class="card enq"><b>'+esc(x.name)+'</b><span class="meta"><span>'+esc(shortSvc(x.service))+'</span></span>'+
+    '<span class="flags"><span class="chip src">'+esc(SRC_LABEL[x.source])+'</span><span class="chip src">'+esc(x.loc)+'</span>'+(x.lost_reason?'<span class="chip late">'+esc(x.lost_reason)+'</span>':'')+'</span>';
+  if(x.next_follow_up)h+='<span class="small '+(late?'':'muted')+'">'+(late?'<span class="chip late">Follow-up overdue</span> ':'Follow up ')+esc(fmt(x.next_follow_up))+'</span>';
+  h+='<label class="sr" for="es-'+x.id+'">Status for '+esc(x.name)+'</label><select id="es-'+x.id+'" data-change="enq-status" data-id="'+x.id+'">'+ENQ_STATUS.map(function(s){return '<option value="'+s+'"'+(s===x.status?' selected':'')+'>'+ENQ_LABEL[s]+'</option>';}).join('')+'</select>';
+  if(x.status==='contacted'||x.status==='quoted')h+='<button class="btn sm ghost" data-a="open-remind" data-id="'+x.id+'" style="margin-top:8px">Remind</button>';
+  h+='</div>';
+  return h;
+}
+function vEnquiries(){
+  var list=vEnq(),tot=list.length,booked=list.filter(function(x){return x.status==='booked';}).length;
+  var h='<div class="stats"><div class="stat"><b>'+tot+'</b><span>Enquiries</span></div><div class="stat"><b>'+booked+'</b><span>Booked</span></div><div class="stat"><b>'+(tot?Math.round(booked/tot*100):0)+'%</b><span>Converted to booking</span></div><div class="stat"><b>'+list.filter(function(x){return x.status==='lost';}).length+'</b><span>Lost</span></div></div><div class="board">';
+  ENQ_STATUS.forEach(function(s){
+    var items=list.filter(function(x){return x.status===s;});
+    h+='<section class="col enqcol" aria-label="'+ENQ_LABEL[s]+'"><header><b>'+ENQ_LABEL[s]+'</b><span>'+items.length+'</span></header>';
+    h+=items.length?items.map(enqCard).join(''):'<div class="small muted" style="padding:6px 4px">None</div>';
+    h+='</section>';
+  });
+  return h+'</div>';
+}
+function vSchedule(){
+  var jobs=vJobs().filter(function(j){return j.stage!=='delivered';});
+  var ses=jobs.filter(function(j){return j.stage==='booked';}).sort(function(a,b){return a.sessionAt<b.sessionAt?-1:1;});
+  var del=jobs.filter(function(j){return j.stage!=='booked';}).sort(function(a,b){return a.promised_delivery<b.promised_delivery?-1:1;});
+  var t=todayISO();
+  var h='<div class="grid2"><div class="panel"><h2>Casting sessions</h2>';
+  if(!ses.length)h+='<div class="empty">No upcoming sessions.</div>';
+  else{h+='<div class="list">';ses.forEach(function(j){h+='<div class="item"><div class="t"><b>'+esc(fmt(j.casting_date))+', '+esc(fmtTime(j.sessionAt))+'</b><span class="muted small">'+esc(j.customer)+' \u00B7 '+esc(shortSvc(j.service))+' \u00B7 '+esc(j.hours)+' hr \u00B7 '+esc(j.loc)+'</span></div><button class="btn sm ghost" data-a="open-job" data-id="'+j.id+'">Open</button></div>';});h+='</div>';}
+  h+='</div><div class="panel"><h2>Deliveries due</h2>';
+  if(!del.length)h+='<div class="empty">No jobs in production.</div>';
+  else{h+='<div class="list">';del.forEach(function(j){var dd=diffISO(j.promised_delivery,t);
+    h+='<div class="item"><div class="t"><b>'+esc(fmt(j.promised_delivery))+'</b><span class="muted small">'+esc(j.customer)+' \u00B7 '+esc(STAGE_NAMES[j.stage])+' \u00B7 '+esc(j.loc)+'</span></div>'+(dd<0?'<span class="chip late">Late</span>':(dd<=7?'<span class="chip wait">'+dd+'d</span>':'<span class="chip">'+dd+'d</span>'))+'</div>';});h+='</div>';}
+  return h+'</div></div>';
+}
+function pctBar(label,a,b,gold){var p=a?Math.round(b/a*100):0;return '<div class="bar"><span>'+esc(label)+'</span><i><u class="'+(gold?'g':'')+'" style="width:'+p+'%"></u></i><span>'+b+' of '+a+' \u00B7 '+p+'%</span></div>';}
+function vReports(){
+  var enq=vEnq(),jobs=vJobs(),tot=enq.length;
+  var con=enq.filter(function(x){return x.status!=='new';}).length,quo=enq.filter(function(x){return x.status==='quoted'||x.status==='booked';}).length,bk=enq.filter(function(x){return x.status==='booked';}).length;
+  var h='<div class="grid2"><div class="stack"><div class="panel"><h2>Enquiry funnel</h2><div class="bars">'+pctBar('Enquiries',tot,tot)+pctBar('Contacted',tot,con)+pctBar('Quoted',tot,quo)+pctBar('Booked',tot,bk,true)+'</div></div>';
+  h+='<div class="panel"><h2>Conversion by source</h2><div class="bars">';
+  var any=false;SRC_KEYS.forEach(function(s){var a=enq.filter(function(x){return x.source===s;});if(a.length){any=true;h+=pctBar(SRC_LABEL[s],a.length,a.filter(function(x){return x.status==='booked';}).length,true);}});
+  if(!any)h+='<div class="empty">No enquiries yet.</div>';
+  h+='</div></div><div class="panel"><h2>Why enquiries were lost</h2>';
+  var lost=enq.filter(function(x){return x.status==='lost';});
+  if(!lost.length)h+='<div class="empty">No lost enquiries.</div>';
+  else{var m={};lost.forEach(function(x){var k=x.lost_reason||'No reason';m[k]=(m[k]||0)+1;});h+='<div class="list">';Object.keys(m).forEach(function(k){h+='<div class="item"><span>'+esc(k)+'</span><b>'+m[k]+'</b></div>';});h+='</div>';}
+  h+='</div></div><div class="stack"><div class="panel"><h2>Jobs by stage</h2><div class="bars">';
+  var mx=1;STAGE_KEYS.forEach(function(k){mx=Math.max(mx,jobs.filter(function(j){return j.stage===k;}).length);});
+  STAGE_KEYS.forEach(function(k){var n=jobs.filter(function(j){return j.stage===k;}).length;h+='<div class="bar"><span>'+esc(STAGE_NAMES[k])+'</span><i><u style="width:'+Math.round(n/mx*100)+'%"></u></i><span>'+n+'</span></div>';});
+  h+='</div></div><div class="panel"><h2>Workload by person</h2><div class="tablewrap"><table><thead><tr><th>Person</th><th>Active</th><th>Overdue</th><th>Waiting</th></tr></thead><tbody>';
+  var l=scopeLoc();
+  S.workload.filter(function(w){return !l||w.location_id===l;}).forEach(function(w){h+='<tr><td>'+esc(w.name)+'</td><td>'+w.active_jobs+'</td><td>'+w.overdue_jobs+'</td><td>'+w.waiting_jobs+'</td></tr>';});
+  h+='</tbody></table></div></div>';
+  var cl=S.cancelled.filter(function(j){return !l||j.location_id===l;});
+  h+='<div class="panel"><h2>Cancelled bookings</h2>';
+  if(!cl.length)h+='<div class="empty">No cancelled bookings.</div>';
+  else{h+='<div class="list">'+cl.map(function(j){return '<div class="item"><div class="t"><b>'+esc(j.customer)+'</b><span class="muted small">'+esc(j.job_no)+' \u00B7 '+esc(shortSvc(j.service))+' \u00B7 '+esc(j.loc)+' \u00B7 '+esc(fmtShort(String(j.cancelled_at).slice(0,10)))+'</span><span class="small" style="display:block">'+esc(j.cancel_reason||'')+'</span></div>'+(isAdmin()?'<button class="btn sm ghost" data-a="restore-booking" data-id="'+j.id+'">Restore</button>':'')+'</div>';}).join('')+'</div>';}
+  return h+'</div></div></div>';
+}
+function fmtWhen(iso){try{return new Date(iso).toLocaleString('en-IN',{timeZone:'Asia/Kolkata',weekday:'short',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});}catch(e){return String(iso||'');}}
+function vOnline(){
+  var rows=(S.site||[]).filter(function(b){return b.status==='confirmed'||b.status==='cancelled';});
+  var h='<div class="panel"><h2>Online bookings</h2><p class="muted small" style="margin-bottom:10px">Bookings paid on the website. Confirmed ones are already on the Job board.</p>';
+  if(!rows.length)return h+'<div class="empty">No online bookings yet.</div></div>';
+  h+='<div class="tablewrap"><table><thead><tr><th>Ref</th><th>Customer</th><th>Service</th><th>Studio</th><th>Session</th><th>Paid / total</th><th>Status</th></tr></thead><tbody>'+
+    rows.slice(0,60).map(function(b){var st=b.status==='confirmed'?'<span class="chip ok">Confirmed</span>':'<span class="chip late">Cancelled</span>';
+      return '<tr><td>'+esc(b.ref)+'</td><td>'+esc(b.customer_name)+'<br><span class="muted small">'+esc(b.customer_phone)+'</span></td><td>'+esc(b.service)+'</td><td>'+esc(b.loc)+'</td><td>'+esc(fmtWhen(b.start_at))+'</td><td>'+inr(b.advance)+' / '+inr(b.total)+'</td><td>'+st+(b.email_sent_at?'':' <span class="muted small">email pending</span>')+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+  return h;
+}
+function vClosed(){
+  var u=S.me,today=todayISO(),list=(S.blocked||[]).filter(function(b){return b.day>=today;});
+  var locSel=u.role==='admin'?'<label class="f">Studio<select id="cl-loc">'+opt((S.ref.locations||[]).map(function(l){return {v:l.id,l:l.name};}),'')+'</select></label>':'';
+  var h='<div class="panel"><h2>Closed days</h2><p class="muted small" style="margin-bottom:10px">Customers cannot book a closed day on the website. Normal hours are Monday to Saturday, 10 AM to 5 PM.</p>'+
+    '<div class="row" style="align-items:flex-end;flex-wrap:wrap;gap:10px">'+locSel+'<label class="f">Date<input type="date" id="cl-day" min="'+today+'"></label><label class="f">Reason (optional)<input type="text" id="cl-why" autocomplete="off" placeholder="e.g. Holiday"></label><button class="btn gold" data-a="add-closed">Close this day</button></div>';
+  if(!list.length)return h+'<div class="empty" style="margin-top:12px">No closed days coming up.</div></div>';
+  return h+'<div class="list" style="margin-top:12px">'+list.map(function(b){return '<div class="item"><div class="t"><b>'+esc(fmt(b.day))+'</b><span class="muted small">'+esc(b.loc)+(b.reason?' \u00B7 '+esc(b.reason):'')+'</span></div><button class="btn sm ghost" data-a="del-closed" data-id="'+esc(b.location_id)+'|'+esc(b.day)+'">Reopen</button></div>';}).join('')+'</div></div>';
+}
+function vSettings(){
+  var R=S.ref;
+  var pushCard='<div class="panel"><h2>Daily reminders on this device</h2><p class="muted small" style="margin-bottom:10px">A short notification at 9am and 5pm summarising sessions and jobs needing attention, even when the tracker is closed. This is set up per device, so turn it on separately on your phone and your computer if you use both.</p>'+pushWidget('')+'</div>';
+  var h='<div class="stack">'+pushCard+vOnline()+vClosed()+'<div class="panel"><h2>Staff</h2><div class="tablewrap"><table><thead><tr><th>Person</th><th>Role</th><th>Location</th><th>Phone</th></tr></thead><tbody>'+
+    S.staff.map(function(s){return '<tr><td>'+esc(s.name)+'</td><td>'+(s.role==='admin'?'Admin':'Location staff')+'</td><td>'+esc(locName(s.location_id))+'</td><td>'+esc(s.phone||'')+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+  h+='<div class="panel"><h2>Services and prices (incl. 5% GST)</h2><div class="tablewrap"><table><thead><tr><th>Service</th><th>Duration</th><th>Price</th><th>QC checklist</th></tr></thead><tbody>'+
+    (R.services||[]).map(function(s){return '<tr><td>'+esc(s.name)+'</td><td>'+esc(s.duration_hours)+' hr</td><td>'+(s.is_from_price?'from ':'')+inr(s.price_incl_gst)+'</td><td>'+(s.qc_checklist?'Yes':'No')+'</td></tr>';}).join('')+'</tbody></table></div><p class="small muted" style="margin-top:10px">The checklist applies to baby services. To change this, tick or untick qc_checklist for a service in Supabase (Table Editor, services).</p></div>';
+  h+='<div class="panel"><h2>Frame sizes and add-ons</h2><p class="muted small" style="margin-bottom:10px">Frame price is included in the service price.</p><div class="tablewrap"><table><tbody>'+
+    (R.frames||[]).map(function(f){return '<tr><td>Frame: '+esc(f.name)+'</td><td class="muted">Included in service price</td></tr>';}).join('')+
+    (R.addons||[]).map(function(a){return '<tr><td>Add-on: '+esc(a.name)+'</td><td>'+inr(a.price_incl_gst)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+  h+='<div class="panel"><h2>Stage targets (days from casting)</h2><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Complete by</th></tr></thead><tbody>'+
+    (R.stages||[]).map(function(s){return '<tr><td>'+esc(STAGE_NAMES[s.stage])+'</td><td>'+(s.complete_by_day==null?'Customer or staff paced':'Day '+s.complete_by_day)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
+  return h+'<p class="small muted">Prices, staff and targets are changed in Supabase for now (Table Editor). Editing screens can be added later.</p></div>';
+}
+
+/* job drawer */
+function vJob(j){
+  var i=stageIdx(j),fl=flags(j),h='',track='';
+  for(var k=0;k<10;k++){track+='<i class="'+(k<i?'done':(k===i?'now':''))+'"></i>';}
+  h+='<div class="jhead"><div><h1>'+esc(j.customer)+'</h1><p class="muted">'+esc(j.job_no)+' \u00B7 '+esc(j.service)+' \u00B7 '+esc(j.frame)+' frame'+(j.addons.length?' \u00B7 '+esc(j.addons.join(', ')):'')+'</p></div><button class="btn ghost" data-a="close">Close</button></div>';
+  h+='<div class="jgrid"><div class="stack">';
+  var by=j.complete_by;
+  h+='<div class="panel"><div class="spread"><h2>'+esc(STAGE_NAMES[j.stage])+'</h2><span class="muted small">'+esc(dayText(j))+(by!=null&&i>0?' \u00B7 complete by day '+by:'')+'</span></div><div class="track" aria-hidden="true">'+track+'</div>';
+  if(fl.length)h+='<div class="row" style="margin-top:8px">'+fl.map(chip).join('')+'</div>';
+  h+=stageControls(j);
+  h+='</div>';
+  h+=vJobSheet(j);
+  var appr={none:'Not sent yet',pending:'Sent, waiting for reply',approved:'Approved by customer',changes:'Customer asked for changes'}[j.approval];
+  h+='<div class="panel"><h2>Checklist</h2>';
+  h+='<div class="check"><div class="l"><b>Customer photo</b><span class="muted small">'+(j.photo_received_at?'Received '+esc(fmtShort(j.photo_received_at.slice(0,10))):'Not received')+'</span></div>'+
+     (j.photo_received_at?'<span class="chip ok">Received</span>':'<label class="btn sm ghost filebtn">Upload photo<input type="file" accept="image/*" data-upload="photo" data-id="'+j.id+'"></label>')+'</div>';
+  h+='<div class="check"><div class="l"><b>Design layout</b><span class="muted small">'+appr+(j.layout_sent_at?' \u00B7 sent '+esc(fmtShort(j.layout_sent_at.slice(0,10))):'')+'</span></div>'+
+     (j.approval==='approved'?'<span class="chip ok">Approved</span>':(j.approval==='changes'?'<span class="chip change">Changes</span>':(j.approval==='pending'?'<span class="chip wait">Waiting</span>':'')))+'</div>';
+  h+='<div class="check"><div class="l"><b>Quality check</b><span class="muted small">'+(j.qcList?'All 10 checks ticked, QC photo uploaded, approved by head office':'QC photo uploaded and approved by head office')+'</span></div>'+(j.qc_approved?'<span class="chip ok">Approved</span>':'<span class="muted small">Not yet</span>')+'</div>';
+  h+='</div>';
+  h+=vQcTable(j);
+  var all=jobFiles(j);
+  h+='<div class="panel"><div class="spread" style="margin-bottom:10px"><h2>Photos and files</h2><label class="btn sm ghost filebtn">Add progress photo<input type="file" accept="image/*" data-upload="progress" data-id="'+j.id+'"></label></div>';
+  if(!all.length)h+='<div class="empty">No files yet.</div>';
+  else{h+='<div class="thumbs">'+all.map(function(f){var u=S.urls[f.storage_path];return '<figure>'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener"><img src="'+esc(u)+'" alt="'+esc(f.kind)+' photo"></a>':'<img alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=">')+'<figcaption>'+esc(f.kind)+'</figcaption></figure>';}).join('')+'</div>';}
+  h+='</div>';
+  h+='<div class="panel"><h2>Notes and updates sent</h2>'+(j.notes?'<div style="white-space:pre-wrap;font-size:14px">'+esc(j.notes)+'</div>':'<div class="empty">Nothing logged yet.</div>')+'</div>';
+  h+=vCustomer(j);
+  var staffOpts=S.staff.filter(function(s){return s.active&&(s.location_id===j.location_id||s.role==='admin');});
+  h+='<div class="panel"><h2>Details</h2><dl class="facts">'+
+    '<div><dt>Assigned to</dt><dd><label class="sr" for="asg">Assigned to</label><select id="asg" data-change="assign" data-id="'+j.id+'">'+staffOpts.map(function(s){return '<option value="'+s.id+'"'+(s.id===j.assigned_to?' selected':'')+'>'+esc(s.name)+'</option>';}).join('')+'</select></dd></div>'+
+    '<div><dt>Location</dt><dd>'+esc(j.loc)+'</dd></div>'+
+    '<div><dt>Casting session</dt><dd>'+esc(fmt(j.casting_date))+', '+esc(fmtTime(j.sessionAt))+'</dd></div>'+
+    '<div><dt>Delivery by</dt><dd>'+esc(fmt(j.promised_delivery))+(j.wait_days?'<br><span class="chip wait">+'+j.wait_days+' days: customer delay</span>':'')+'</dd></div>'+
+    '<div style="grid-column:1/-1"><dt>Charges</dt><dd id="dt-charges" style="font-weight:400">'+chargesHtml(j)+'</dd></div>'+
+    '<div><dt>Advance paid (\u20B9)</dt><dd class="row"><label class="sr" for="adv">Advance paid</label><input type="number" id="adv" min="0" value="'+esc(j.advance)+'" style="min-height:36px;width:110px"><button class="btn sm ghost" data-a="save-advance" data-id="'+j.id+'">Save</button></dd></div>'+
+    '<div><dt>Travel charges (\u20B9)</dt><dd class="row"><label class="sr" for="trv">Travel charges</label><input type="number" id="trv" min="0" step="1" value="'+esc(j.travel||0)+'" style="min-height:36px;width:110px"><button class="btn sm ghost" data-a="save-travel" data-id="'+j.id+'">Save</button></dd><span class="small muted">Doorstep Ola/Uber fare. Added to the balance.</span></div>'+
+    '<div><dt>GST invoice no.</dt><dd class="row"><label class="sr" for="inv">GST invoice number</label><input type="text" id="inv" value="'+esc(j.invoice_no||'')+'" style="min-height:36px;width:130px"><button class="btn sm ghost" data-a="save-invoice" data-id="'+j.id+'">Save</button></dd></div></dl>'+
+    (j.stage!=='delivered'?'<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)"><button class="btn sm ghost" data-a="cancel-booking" data-id="'+j.id+'" style="color:var(--rose)">Cancel booking</button></div>':'')+'</div>';
+  h+='</div><div>'+phone(j)+'</div></div>';
+  return h;
+}
+function shText(j,k,label,hint,type,extra){
+  var v=sheetOf(j)[k];v=v==null?'':v;
+  return '<label class="f">'+esc(label)+(hint?'<span class="h">'+esc(hint)+'</span>':'')+'<input type="'+(type||'text')+'" id="sh-'+k+'" data-change="sh-field" data-id="'+j.id+'" data-key="'+k+'" value="'+esc(v)+'" autocomplete="off"'+(extra||'')+'></label>';
+}
+function shSelect(j,k,label,opts,hint,blank){
+  var v=sheetOf(j)[k]||'';
+  return '<label class="f">'+esc(label)+(hint?'<span class="h">'+esc(hint)+'</span>':'')+'<select id="sh-'+k+'" data-change="sh-field" data-id="'+j.id+'" data-key="'+k+'"><option value="">'+esc(blank||'Select')+'</option>'+
+    opts.map(function(o){return '<option value="'+esc(o[0])+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></label>';
+}
+function shCheck(j,k,text){
+  return '<label class="full row" style="gap:10px;align-items:flex-start;flex-wrap:nowrap"><input type="checkbox" id="sh-'+k+'" data-change="sh-field" data-id="'+j.id+'" data-key="'+k+'"'+(sheetOf(j)[k]?' checked':'')+' style="width:20px;height:20px;margin-top:2px;flex:none"><span style="flex:1">'+esc(text)+'</span></label>';
+}
+function vJobSheet(j){
+  var st=sheetChip(j),sh=sheetOf(j),h3=function(t){return '<h3 class="full" style="margin-top:10px">'+esc(t)+'</h3>';};
+  return '<div class="panel" id="jobsheet"><div class="spread" style="margin-bottom:6px"><h2>Job sheet</h2><span class="chip '+st.c+'" id="sh-chip">'+st.t+'</span></div>'+
+    '<p class="muted small" style="margin-bottom:12px">The digital version of the paper job sheet. Answers save as you go. The customer still signs the paper copy.</p>'+
+    '<dl class="facts" style="margin-bottom:16px">'+
+      '<div><dt>Job ID</dt><dd>'+esc(j.job_no)+'</dd></div>'+
+      '<div><dt>Date and Place</dt><dd>'+esc(fmtShort(String(j.created_at||'').slice(0,10)))+', '+esc(j.loc)+'</dd></div>'+
+      '<div><dt>Mobile number</dt><dd>'+esc(j.phone)+'</dd></div>'+
+      '<div><dt>Customer Name</dt><dd>'+esc(j.customer)+'</dd></div>'+
+      '<div><dt>Casting Service</dt><dd>'+esc(j.service)+'</dd></div>'+
+      '<div><dt>Casting Date</dt><dd>'+esc(fmt(j.casting_date))+'</dd></div>'+
+    '</dl>'+
+    '<div class="form">'+
+      shText(j,'booking','Booking')+
+      h3('Baby details')+
+      shText(j,'baby_name','Baby Name')+
+      '<span></span>'+
+      shText(j,'dob','D.O.B','Date of birth','date')+
+      shText(j,'tob','T.O.B','Time of birth','time')+
+      shText(j,'height','Height','e.g. 52 cm')+
+      shText(j,'weight','Weight','e.g. 3.4 kg')+
+      h3('Casting and frame')+
+      shText(j,'casting_color','Casting Color')+
+      shText(j,'frame_pattern','Frame pattern and Color')+
+      shSelect(j,'frame_layout','Frame layout front or background',[['front','Front'],['background','Background']])+
+      shText(j,'frame_size','Frame Size')+
+      h3('Extras')+
+      shSelect(j,'display_box','Display Box',[['couple','Couple casting'],['parent_baby','Parent with Baby']],'Couple casting / Parent with Baby','None')+
+      shSelect(j,'ring_highlight','Ring highlight',[['yes','Yes'],['no','No']],'Y/N')+
+      shText(j,'ring_color','Ring colour','If yes')+
+      shText(j,'wooden_base','Wooden Base')+
+      shText(j,'photo','Photo')+
+      shText(j,'tagline','Tagline')+
+      shText(j,'customization_cost','Customization Cost','\u20B9, added to the balance','number',' min="0" step="1" inputmode="numeric"')+
+      h3('Payment and delivery')+
+      '<label class="f">Payment<input type="text" list="sh-pay-list" id="sh-payment" data-change="sh-field" data-id="'+j.id+'" data-key="payment" value="'+esc(sh.payment||'')+'" autocomplete="off"><datalist id="sh-pay-list">'+SHEET_PAY.map(function(x){return '<option value="'+esc(x)+'">';}).join('')+'</datalist></label>'+
+      '<span></span>'+
+      '<div><span class="small muted" style="font-weight:600">Advance</span><div style="font-weight:600;margin-top:4px">'+inr(j.advance)+'</div></div>'+
+      '<div><span class="small muted" style="font-weight:600">Balance</span><div style="font-weight:600;margin-top:4px" id="sh-balance">'+inr(dueNow(j))+'</div><span class="small muted">Includes the customization cost and travel charges</span></div>'+
+      shSelect(j,'search','Search',SHEET_SEARCH,'How did they find us?')+
+      shSelect(j,'delivery','Delivery',SHEET_DELIVERY.map(function(o){return [o[0],o[1]];}),'Urgent, 2w, 3w, 4w')+
+      shText(j,'delivery_date','Delivery date','Used as the promised delivery date','date')+
+      '<span></span>'+
+      '<label class="f full">Comments<textarea id="sh-comments" data-change="sh-field" data-id="'+j.id+'" data-key="comments" rows="3">'+esc(sh.comments||'')+'</textarea></label>'+
+      h3('Agreement')+
+      shCheck(j,'agreed','The customer agrees to the Terms and Conditions and confirms the details above are true.')+
+      shCheck(j,'promo_ok','The customer allows Lifeimpressions to use their email for further email promotions.')+
+    '</div></div>';
+}
+function vCustomer(j){
+  return '<div class="panel"><h2>Customer</h2><dl class="facts" style="margin-top:10px">'+
+    '<div><dt>Name</dt><dd>'+esc(j.customer)+'</dd></div>'+
+    '<div><dt>WhatsApp</dt><dd>'+esc(j.phone)+'</dd></div>'+
+    '<div style="grid-column:1/-1"><dt><label for="ct-email">Email</label></dt><dd><input type="email" id="ct-email" value="'+esc(j.email)+'" placeholder="Not provided" autocomplete="off"></dd></div>'+
+    '<div style="grid-column:1/-1"><dt><label for="ct-addr">Address</label></dt><dd><input type="text" id="ct-addr" value="'+esc(j.address)+'" placeholder="Not provided" autocomplete="off"></dd></div>'+
+    (j.sessionAddress?'<div style="grid-column:1/-1"><dt>Booking address (from the website)</dt><dd style="font-weight:400">'+esc(j.sessionAddress)+'</dd></div>':'')+
+    '</dl><div class="row" style="margin-top:12px"><button class="btn sm" data-a="save-contact" data-id="'+j.id+'">Save contact details</button></div>'+
+    '<p class="small muted" style="margin-top:8px">Saved on the customer, so it shows on all their bookings.</p></div>';
+}
+function vQcTable(j){
+  if(!j.qcList||stageIdx(j)<STAGE_KEYS.indexOf('quality_check'))return '';
+  var edit=(j.stage==='quality_check'&&!j.qc_approved),c=j.qc_checks||{},n=qcCount(j);
+  var chip=j.qc_approved?'<span class="chip ok">QC Passed</span>':'<span class="chip '+(n===QC_ITEMS.length?'ok':'wait')+'">'+n+' of '+QC_ITEMS.length+' passed</span>';
+  var h='<div class="panel"><div class="spread" style="margin-bottom:6px"><h2>Customer requirement checklist</h2>'+chip+'</div>'+
+    '<p class="muted small" style="margin-bottom:10px">'+(edit?'Tick each point once it matches what the customer asked for, including when they asked for none. All '+QC_ITEMS.length+' must pass before QC can be approved.':(j.qc_approved?'QC is approved, so this checklist is locked.':'Read only.'))+'</p>'+
+    '<div class="tablewrap"><table class="qc"><thead><tr><th>Description</th><th>Customer requirement</th><th class="qcchk">QC Passed</th></tr></thead><tbody>';
+  QC_ITEMS.forEach(function(it,i){
+    var k=it[0],row=c[k]||{};
+    h+='<tr><td>'+(i+1)+'. '+esc(it[1])+'</td>'+
+      '<td><input type="text" id="qcn-'+k+'" data-change="qc-note" data-id="'+j.id+'" data-key="'+k+'" value="'+esc(row.note||'')+'" aria-label="Customer requirement for '+esc(it[1])+'" placeholder="Optional"'+(edit?'':' disabled')+'></td>'+
+      '<td class="qcchk"><input type="checkbox" id="qc-'+k+'" data-change="qc-check" data-id="'+j.id+'" data-key="'+k+'"'+(row.ok?' checked':'')+' aria-label="QC passed: '+esc(it[1])+'"'+(edit?'':' disabled')+'></td></tr>';
+  });
+  return h+'</tbody></table></div></div>';
+}
+async function saveQc(j,checks,doRender){
+  var old=j.qc_checks;j.qc_checks=checks;
+  if(doRender)render();
+  var r=await sb.from('jobs').update({qc_checks:checks}).eq('id',j.id);
+  if(r.error){j.qc_checks=old;render();fail(r.error);}
+}
+function stageControls(j){
+  var lbl=actionLabel(j),h='',up=function(kind,text){return '<label class="btn sm ghost filebtn">'+text+'<input type="file" accept="image/*" data-upload="'+kind+'" data-id="'+j.id+'"></label>';};
+  var lay=jobFiles(j,'layout').length,qc=jobFiles(j,'qc').length;
+  h+='<div class="row" style="margin-top:14px">';
+  if(j.stage==='layout_ready'||(j.stage==='awaiting_approval'&&j.approval==='changes'))h+=up('layout',lay?'Upload another layout':'Upload layout');
+  if(j.stage==='awaiting_approval'&&j.approval==='pending'&&isAdmin())h+='<button class="btn gold" data-a="mark-approved" data-id="'+j.id+'">Mark approved</button>';
+  if(j.stage==='quality_check'){
+    h+=up('qc',qc?'Upload another QC photo':'Upload QC photo');
+    if(!j.qc_approved){
+      var qcReady=qc&&(!j.qcList||qcComplete(j));
+      if(isAdmin())h+='<button class="btn ghost" data-a="approve-qc" data-id="'+j.id+'"'+(qcReady?'':' disabled')+'>Approve QC</button>';
+      else h+='<span class="muted small">Head office approves QC.</span>';
+      if(j.qcList&&!qcComplete(j))h+='<span class="muted small">'+qcCount(j)+' of '+QC_ITEMS.length+' checks done.</span>';
+    }
+  }
+  h+='<button class="btn ghost" data-a="open-update" data-id="'+j.id+'">Send update</button>';
+  if(lbl){
+    var dis=false;
+    if(j.stage==='layout_ready'&&!lay)dis=true;
+    if(j.stage==='finishing'&&!j.photo_received_at)dis=true;
+    if(j.stage==='quality_check'&&!j.qc_approved)dis=true;
+    if(j.stage==='booked'&&j.day_no<0)dis=true;
+    h+='<button class="btn gold" data-a="adv" data-id="'+j.id+'"'+(dis?' disabled':'')+'>'+esc(lbl)+'</button>';
+  }
+  h+='</div>';
+  if(j.stage==='finishing'&&!j.photo_received_at)h+='<div class="rule" style="margin-top:12px">The layout cannot be designed without the customer photo. It has not arrived yet.</div>';
+  if(j.stage==='awaiting_approval'&&j.approval==='pending')h+='<p class="small muted" style="margin-top:10px">Final fixing stays locked until the customer approves. Head office marks it approved once they reply.</p>';
+  if(j.stage==='booked'&&j.day_no<0)h+='<p class="small muted" style="margin-top:10px">Casting can be marked done from '+esc(fmt(j.casting_date))+'.</p>';
+  return h;
+}
+function phone(j){
+  var msgs=S.msgs[j.id]||[],last=null;
+  var h='<div class="phone" aria-label="Messages sent to the customer"><div class="bar1"><span class="av">L</span><div><b>Lifeimpressions</b><small>Messages with '+esc(j.customer)+'</small></div></div><div class="msgs" id="msgs">';
+  if(!msgs.length)h+='<div class="dsep">No messages yet</div>';
+  msgs.forEach(function(m){
+    var dk=fmt(new Date(m.created_at).toISOString().slice(0,10));
+    if(dk!==last){h+='<div class="dsep">'+esc(dk)+'</div>';last=dk;}
+    h+='<div class="b'+(m.direction==='in'?' in':'')+'">'+esc(m.body||('['+(m.template||'message')+']'))+'<small>'+esc(fmtTime(m.created_at))+(m.status?' \u00B7 '+esc(m.status):'')+'</small></div>';
+  });
+  h+='</div><div class="phonefoot"><button class="btn sm ghost" data-a="reload-msgs" data-id="'+j.id+'">Refresh messages</button></div></div>';
+  h+='<p class="demo">Updates sent with Send update are listed under Notes and updates sent. This history fills in by itself once the WhatsApp API is connected.</p>';
+  return h;
+}
+
+/* dialogs */
+function opt(list,sel){return list.map(function(x){var v=typeof x==='object'?x.v:x,l=typeof x==='object'?x.l:x;return '<option value="'+esc(v)+'"'+(String(v)===String(sel)?' selected':'')+'>'+esc(l)+'</option>';}).join('');}
+function vBooking(pre){
+  pre=pre||{};
+  var R=S.ref,loc=pre.loc||(S.me.role==='admin'?(scopeLoc()||S.me.location_id):S.me.location_id);
+  var times=[];for(var t=10;t<=16;t++){times.push((t<10?'0':'')+t+':00');}
+  var locSel=S.me.role==='admin'?'<select id="b-loc">'+opt(R.locations.map(function(l){return {v:l.id,l:l.name};}),loc)+'</select>':'<select id="b-loc" disabled>'+opt(R.locations.filter(function(l){return l.id===loc;}).map(function(l){return {v:l.id,l:l.name};}),loc)+'</select>';
+  return '<h2 id="dlgt">New booking</h2><p class="muted small" style="margin:4px 0 16px">Bookings from the website arrive here automatically. Use this for phone and walk-in bookings.</p><div class="form">'+
+   '<label class="f full">Customer name<input type="text" id="b-name" value="'+esc(pre.name||'')+'" autocomplete="off"></label>'+
+   '<label class="f">WhatsApp number<input type="tel" id="b-phone" value="'+esc(pre.phone||'')+'" placeholder="+91"></label>'+
+   '<label class="f">Location'+locSel+'</label>'+
+   '<label class="f">Email (optional)<input type="email" id="b-email" value="'+esc(pre.email||'')+'" autocomplete="off"></label>'+
+   '<label class="f">Address (optional)<input type="text" id="b-addr" value="'+esc(pre.address||'')+'" autocomplete="off"></label>'+
+   '<label class="f full">Service<select id="b-svc">'+(R.services||[]).filter(function(s){return s.active;}).map(function(s){return '<option value="'+s.id+'"'+(s.id===pre.service_id?' selected':'')+'>'+esc(s.name)+' ('+(s.is_from_price?'from ':'')+inr(s.price_incl_gst)+')</option>';}).join('')+'</select></label>'+
+   '<label class="f">Frame size<select id="b-frame">'+opt((R.frames||[]).map(function(f){return {v:f.id,l:f.name};}),(R.frames[0]||{}).id)+'</select><span class="h">Included in the service price</span></label>'+
+   '<label class="f">Advance paid (\u20B9)<input type="number" id="b-adv" min="0" value="" placeholder="0"></label>'+
+   '<label class="f">Session date<input type="date" id="b-date" min="'+todayISO()+'" value="'+addISO(todayISO(),3)+'"></label>'+
+   '<label class="f">Time<select id="b-time">'+opt(times,'11:00')+'</select></label>'+
+   '<div class="full"><span class="small muted" style="font-weight:600">Add-ons</span><div class="addons">'+(R.addons||[]).filter(function(a){return a.active;}).map(function(a){return '<label><input type="checkbox" class="b-ad" value="'+a.id+'"> '+esc(a.name)+' ('+inr(a.price_incl_gst)+')</label>';}).join('')+'</div></div>'+
+   '<label class="full row" style="gap:10px"><input type="checkbox" id="b-consent" style="width:20px;height:20px"> The customer agreed to receive WhatsApp updates</label>'+
+   '<div class="full summary" id="b-sum"></div></div>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Cancel</button><button class="btn gold" data-a="save-booking" data-enq="'+esc(pre.enqId||'')+'" data-inbox="'+esc(pre.inboxId||'')+'" data-wix="'+esc(pre.wixId||'')+'" data-sess="'+esc(pre.sess||'')+'">Create booking</button></div>';
+}
+function bookingTotals(){
+  var s=(S.ref.services||[]).filter(function(x){return String(x.id)===$('b-svc').value;})[0]||{price_incl_gst:0};
+  var base=Number(s.price_incl_gst),extra=0;
+  document.querySelectorAll('.b-ad').forEach(function(c){if(c.checked){var a=S.ref.addons.filter(function(x){return String(x.id)===c.value;})[0];extra+=Number(a.price_incl_gst);}});
+  var t=base+extra,adv=parseFloat($('b-adv').value)||0;
+  return {t:t,base:base,adv:adv,gst:t-t/1.05,from:!!s.is_from_price};
+}
+function updateSummary(){
+  var el=$('b-sum');if(!el)return;var x=bookingTotals();
+  el.innerHTML='<div><span>Service'+(x.from?' (from price)':'')+'</span><span>'+inr(x.base)+'</span></div><div><span>Add-ons</span><span>'+inr(x.t-x.base)+'</span></div><div class="tot"><span>Total incl. GST</span><span>'+inr(x.t)+'</span></div><div><span class="muted">of which 5% GST</span><span class="muted">'+inr(x.gst)+'</span></div><div><span>Balance after advance</span><span>'+inr(Math.max(0,x.t-x.adv))+'</span></div>';
+}
+function vEnqForm(){
+  var R=S.ref,loc=S.me.role==='admin'?(scopeLoc()||S.me.location_id):S.me.location_id;
+  var locSel=S.me.role==='admin'?'<select id="e-loc">'+opt(R.locations.map(function(l){return {v:l.id,l:l.name};}),loc)+'</select>':'<select id="e-loc" disabled>'+opt(R.locations.filter(function(l){return l.id===loc;}).map(function(l){return {v:l.id,l:l.name};}),loc)+'</select>';
+  return '<h2 id="dlgt">Add enquiry</h2><div class="form" style="margin-top:16px"><label class="f full">Name<input type="text" id="e-name" autocomplete="off"></label>'+
+   '<label class="f">WhatsApp number<input type="tel" id="e-phone" placeholder="+91"></label>'+
+   '<label class="f">Source<select id="e-src">'+opt(SRC_KEYS.map(function(k){return {v:k,l:SRC_LABEL[k]};}),'instagram')+'</select></label>'+
+   '<label class="f full">Service of interest<select id="e-svc">'+opt((R.services||[]).filter(function(s){return s.active;}).map(function(s){return {v:s.id,l:s.name};}),'')+'</select></label>'+
+   '<label class="f">Preferred location'+locSel+'</label>'+
+   '<label class="f">Follow up on<input type="date" id="e-fu" value="'+addISO(todayISO(),1)+'"></label></div>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Cancel</button><button class="btn gold" data-a="save-enq">Add enquiry</button></div>';
+}
+var CANCEL_REASONS=['Customer cancelled','Customer moved to another date or studio','No response from customer','Duplicate booking','Entered by mistake','Other'];
+function vCancel(j){
+  return '<h2 id="dlgt">Cancel '+esc(j.job_no)+' for '+esc(j.customer)+'?</h2><p class="muted small" style="margin:4px 0 16px">The job leaves the board and reports. The record is kept, and head office can restore it. The customer is not told automatically, and a Wix booking is not cancelled on the website.</p>'+
+   '<label class="f">Reason<select id="c-reason">'+opt(CANCEL_REASONS,'Customer cancelled')+'</select></label>'+
+   '<label class="f" style="margin-top:12px">Note (optional)<input type="text" id="c-note" autocomplete="off"></label>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Keep the booking</button><button class="btn" data-a="confirm-cancel" data-id="'+j.id+'" style="background:var(--rose);border-color:var(--rose);color:#fff">Cancel booking</button></div>';
+}
+function vApprove(j){
+  return '<h2 id="dlgt">Mark '+esc(j.job_no)+' as approved?</h2><p class="muted small" style="margin:4px 0 16px">Use this only when the customer has confirmed by phone, in person, or another way outside WhatsApp. This unlocks final fixing.</p>'+
+   '<label class="f">How did the customer confirm? (kept in the job notes)<textarea id="ap-note" placeholder="e.g. Confirmed by phone call today"></textarea></label>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Cancel</button><button class="btn gold" data-a="confirm-approve" data-id="'+j.id+'">Mark approved</button></div>';
+}
+function vUpdate(j){
+  var key=UPDATE_DEFAULT[j.stage]||'booked',has=!!String(j.phone||'').replace(/\D/g,'');
+  return '<h2 id="dlgt">Send update to '+esc(j.customer)+'</h2><p class="muted small" style="margin:4px 0 16px">This opens WhatsApp with the message below, ready to send to '+(has?esc(j.phone):'their number')+'. You can edit it first.</p>'+
+   (has?'':'<div class="rule" style="margin-bottom:12px">No WhatsApp number is on file for this customer.</div>')+
+   '<label class="f">Message type<select id="up-key" data-change="upd-tpl" data-id="'+j.id+'">'+UPDATE_TPL.map(function(t){return '<option value="'+t.k+'"'+(t.k===key?' selected':'')+'>'+esc(t.l)+'</option>';}).join('')+'</select></label>'+
+   '<label class="f" style="margin-top:12px">Message<textarea id="up-text" rows="5">'+esc(tplFor(key).fn(j))+'</textarea></label>'+
+   '<p class="small muted" style="margin-top:8px">WhatsApp links cannot attach pictures. For the layout, attach the image in WhatsApp before you send.</p>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="back-job" data-id="'+j.id+'">Cancel</button><button class="btn gold" data-a="send-update" data-id="'+j.id+'"'+(has?'':' disabled')+'>Open WhatsApp</button></div>';
+}
+function vRemind(x){
+  var has=!!String(x.whatsapp||'').trim();
+  return '<h2 id="dlgt">Remind '+esc(x.name)+'?</h2><p class="muted small" style="margin:4px 0 16px">This opens WhatsApp with the message below, ready to send to '+(has?esc(x.whatsapp):'their number')+'. You can edit it first.</p>'+
+   (has?'':'<div class="rule" style="margin-bottom:12px">No WhatsApp number is on file for this enquiry. Add one before sending.</div>')+
+   '<label class="f">Message<textarea id="rm-text" rows="5">'+esc(REMIND_MSG)+'</textarea></label>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Cancel</button><button class="btn gold" data-a="send-remind" data-id="'+x.id+'"'+(has?'':' disabled')+'>Notify</button></div>';
+}
+function vLost(x){
+  return '<h2 id="dlgt">Why was '+esc(x.name)+' lost?</h2><p class="muted small" style="margin:4px 0 16px">A reason helps you see patterns in the report.</p><label class="f">Reason<select id="l-reason">'+opt(LOST_REASONS,'Price')+'</select></label>'+
+   '<div class="row" style="justify-content:flex-end;margin-top:18px"><button class="btn ghost" data-a="close">Cancel</button><button class="btn" data-a="save-lost" data-id="'+x.id+'">Mark as lost</button></div>';
+}
+
+/* ------------------------------------------------------------------ render */
+function render(){
+  if(!S.me)return;
+  var app=$('app'),board=$('board'),bl=board?board.scrollLeft:0,sy=window.scrollY;var mb=document.querySelector('.mscroll-body'),msy=mb?mb.scrollTop:0;
+  var u=S.me,h='<div class="mscroll"><div class="mscroll-body"><div class="mobile-brand"><img src="brand-logo.png" alt="Lifeimpressions"></div><div class="shell"><aside class="side"><div class="brand"><img src="brand-logo.png" alt="Lifeimpressions"></div><div class="side-body"><span class="side-caption">Studio tracker</span><nav class="nav" aria-label="Main">'+
+    NAV.map(function(n){return '<button data-a="nav" data-v="'+n[0]+'"'+(S.view===n[0]?' aria-current="page"':'')+'>'+svg(n[2])+n[1]+'</button>';}).join('')+
+    '</nav><div class="sidenote"><span style="color:var(--sidebar-ink)">Signed in as <b style="color:var(--sidebar-ink)">'+esc(u.name)+'</b><br>'+(u.role==='admin'?'Admin, all locations':esc(locName(u.location_id)))+'</span>'+pushWidget('sm')+'<button class="btn sm ghost" data-a="signout">Sign out</button></div></div></aside><main class="'+(S.busy?'busy':'')+'">';
+  h+='<div class="top"><h1>'+TITLES[S.view]+'</h1><div class="who">';
+  if(u.role==='admin')h+='<label class="field-inline">Location <select data-change="loc" aria-label="Location">'+opt([{v:'all',l:'All locations'}].concat((S.ref.locations||[]).map(function(l){return {v:l.id,l:l.name};})),S.locFilter)+'</select></label>';
+  h+='<button class="btn ghost" data-a="refresh">Refresh</button>';
+  if(S.view==='enq')h+='<button class="btn ghost" data-a="new-enq">Add enquiry</button>';
+  h+='<button class="btn gold" data-a="new-booking">New booking</button></div></div>';
+  if(!S.ref.locations){h+='<div class="empty">Loading...</div>';}
+  else h+={today:vToday,jobs:vBoard,enq:vEnquiries,sched:vSchedule,reports:vReports,settings:vSettings}[S.view]();
+  h+='</main></div></div><nav class="tabbar" aria-label="Main">'+NAV.map(function(n){return '<button data-a="nav" data-v="'+n[0]+'"'+(S.view===n[0]?' aria-current="page"':'')+'>'+svg(n[2])+n[1]+'</button>';}).join('')+'</nav></div>';
+  if(S.modal){
+    var m=S.modal;
+    if(m.type==='job'){var j=jobById(m.id);if(j)h+='<div class="overlay" data-a="scrim"><div class="sheet" role="dialog" aria-modal="true" aria-label="Job '+esc(j.job_no)+'" tabindex="-1" id="modal">'+vJob(j)+'</div></div>';}
+    else{var body=m.type==='booking'?vBooking(m.pre):(m.type==='enq'?vEnqForm():(m.type==='cancel'?vCancel(jobById(m.id)):(m.type==='approve'?vApprove(jobById(m.id)):(m.type==='remind'?vRemind(enqById(m.id)):(m.type==='update'?vUpdate(jobById(m.id)):vLost(enqById(m.id)))))));h+='<div class="overlay center" data-a="scrim"><div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlgt" tabindex="-1" id="modal">'+body+'</div></div>';}
+  }
+  var me=$('msgs'),keep=me?me.scrollTop:0,atEnd=me?(me.scrollHeight-me.scrollTop-me.clientHeight<40):true;
+  var sheet=document.querySelector('.sheet'),sk=sheet?sheet.scrollTop:0;
+  var focusId=document.activeElement&&document.activeElement.id;
+  app.innerHTML=h;
+  var nb=$('board');if(nb)nb.scrollLeft=bl;
+  window.scrollTo(0,sy);
+  var nmb=document.querySelector('.mscroll-body');if(nmb)nmb.scrollTop=msy;
+  var ns=document.querySelector('.sheet');if(ns&&!S.focusModal)ns.scrollTop=sk;
+  var ne=$('msgs');if(ne)ne.scrollTop=atEnd?ne.scrollHeight:keep;
+  if(S.modal&&S.focusModal){var mm=$('modal');if(mm){var f=mm.querySelector('input[type=text],select:not([disabled]),button');(f||mm).focus();}S.focusModal=false;}
+  else if(focusId&&S.modal){var fe=$(focusId);if(fe&&fe.focus)fe.focus();}
+  if(S.modal&&S.modal.type==='job'&&S.focusSheet){var jsp=$('jobsheet');if(jsp)jsp.scrollIntoView();S.focusSheet=false;}
+  if(S.modal&&S.modal.type==='booking')updateSummary();
+}
+function pushWidget(size){
+  var b='btn '+(size||'')+' ghost';
+  if(S.pushState==='on')return '<button class="'+b+'" data-a="push-off"'+(S.pushBusy?' disabled':'')+'>Turn off daily reminders</button>';
+  if(S.pushState==='denied')return '<p class="small muted">Reminders are blocked in this browser\u2019s settings. Allow notifications for this site, then reload.</p>';
+  if(S.pushState==='ios-need-home-screen')return '<p class="small muted">On iPhone: tap Share, then \u201CAdd to Home Screen\u201D, and open the app from there to turn on reminders.</p>';
+  if(S.pushState==='unsupported')return '<p class="small muted">This browser cannot show reminders. They still work on the app once opened.</p>';
+  return '<button class="btn '+(size||'')+' gold" data-a="push-on"'+(S.pushBusy?' disabled':'')+'>Turn on daily reminders</button>';
+}
+function vPushBanner(){
+  if(S.pushState!=='off')return '';
+  return '<div class="panel" style="margin-bottom:18px"><div class="spread"><div><h2>Get a reminder without opening the app</h2><p class="muted small" style="margin-top:4px">A short notification at 9am and 5pm, even when the tracker is closed. Tap it to jump straight in.</p></div>'+pushWidget('')+'</div></div>';
+}
+function openModal(m){S.modal=m;S.focusModal=true;if(m.type==='job'){var j=jobById(m.id);ensureUrls(j);loadMsgs(m.id);}render();}
+function closeModal(){S.modal=null;render();}
+
+/* ------------------------------------------------------------------ events */
+document.addEventListener('submit',function(ev){if(ev.target.id==='loginform'){ev.preventDefault();doLogin();}});
+document.addEventListener('click',async function(ev){
+  var el=ev.target.closest('[data-a]');if(!el)return;
+  var a=el.getAttribute('data-a'),id=el.getAttribute('data-id');
+  if(a==='scrim'){if(ev.target===el)closeModal();return;}
+  try{
+  switch(a){
+    case 'nav':{S.view=el.getAttribute('data-v');S.modal=null;window.scrollTo(0,0);var mbr=document.querySelector('.mscroll-body');if(mbr)mbr.scrollTop=0;render();break;}
+    case 'open-job':openModal({type:'job',id:id});break;
+    case 'close':closeModal();break;
+    case 'signout':await sb.auth.signOut();break;
+    case 'push-on':await enablePush();break;
+    case 'push-off':await disablePush();break;
+    case 'refresh':await loadAll(false);break;
+    case 'reload-msgs':loadMsgs(id);break;
+    case 'brief-tab':S.briefTab=el.getAttribute('data-v');render();break;
+    case 'new-booking':openModal({type:'booking',pre:{}});break;
+    case 'inbox-book':{
+      var row=S.inbox.filter(function(x){return String(x.id)===id;})[0],pl=(row&&row.payload)||{};
+      var nz=function(t){return String(t||'').toLowerCase().replace(/[^a-z0-9]+/g,'');};
+      var sv=(S.ref.services||[]).filter(function(x){return nz(x.name)===nz(pl.service);})[0];
+      var lc=(S.ref.locations||[]).filter(function(x){return nz(pl.location).indexOf(nz(x.name))>=0;})[0];
+      openModal({type:'booking',pre:{name:pl.customer_name||'',phone:pl.whatsapp||'',email:pl.email||'',address:pl.address||'',sess:pl.location||'',service_id:sv?sv.id:undefined,loc:lc?lc.id:undefined,inboxId:row.id,wixId:row.wix_booking_id||''}});break;}
+    case 'inbox-dismiss':{
+      var rd=await sb.from('booking_inbox').update({status:'handled'}).eq('id',Number(id));
+      if(rd.error)throw rd.error;await refreshAfter('Dismissed.');break;}
+    case 'save-advance':{
+      var jb=jobById(id),v=parseFloat($('adv').value);
+      if(!(v>=0)){toast('Enter a valid amount.',true);return;}
+      var ra=await sb.from('orders').update({advance_paid:v}).eq('id',jb.order_id);
+      if(ra.error)throw ra.error;await refreshAfter('Advance saved.');break;}
+    case 'save-travel':{
+      var jtv=jobById(id),tvr=$('trv').value.trim(),tv=tvr===''?0:parseFloat(tvr);
+      if(!(tv>=0)||tv>1000000){toast('Enter a valid amount.',true);return;}
+      var rtv=await sb.from('orders').update({travel_charges:tv}).eq('id',jtv.order_id);
+      if(rtv.error){
+        if(/travel_charges/.test(rtv.error.message||'')){toast('Run 10_travel_charges.sql in Supabase first, then try again.',true);return;}
+        throw rtv.error;
+      }
+      await refreshAfter('Travel charges saved.');break;}
+    case 'site-ack':{var ra2=await sb.from('site_bookings').update({needs_staff_cancel:false}).eq('id',id);if(ra2.error)throw ra2.error;await refreshAfter('Marked done.');break;}
+    case 'add-closed':{
+      var cd=$('cl-day').value,cl=$('cl-loc')?Number($('cl-loc').value):S.me.location_id;
+      if(!cd){toast('Choose a date.',true);return;}
+      var rc=await sb.from('blocked_dates').insert({location_id:cl,day:cd,reason:($('cl-why').value||'').trim()||null});
+      if(rc.error){if(/duplicate/i.test(rc.error.message||'')){toast('That day is already closed.',true);return;}throw rc.error;}
+      await refreshAfter('Day closed for online booking.');break;}
+    case 'del-closed':{
+      var pr=id.split('|'),rd2=await sb.from('blocked_dates').delete().eq('location_id',Number(pr[0])).eq('day',pr[1]);
+      if(rd2.error)throw rd2.error;await refreshAfter('Day reopened.');break;}
+    case 'new-enq':openModal({type:'enq'});break;
+    case 'cancel-booking':openModal({type:'cancel',id:id});break;
+    case 'open-remind':openModal({type:'remind',id:id});break;
+    case 'open-update':openModal({type:'update',id:id});break;
+    case 'save-contact':{
+      var jc=jobById(id),cem=$('ct-email').value.trim(),cad=$('ct-addr').value.trim();
+      if(cem&&!/^\S+@\S+\.\S+$/.test(cem)){toast('That email address does not look right.',true);return;}
+      var rc=await sb.from('customers').update({email:cem?cem.toLowerCase():null,address:cad||null}).eq('id',jc.customerId);
+      if(rc.error)throw rc.error;
+      await refreshAfter('Contact details saved.');break;}
+    case 'back-job':openModal({type:'job',id:id});break;
+    case 'send-update':{
+      var ju=jobById(id),utxt=$('up-text').value.trim(),ukey=$('up-key').value;
+      if(!utxt){toast('Write a message first.',true);return;}
+      var ulink=waLink(ju.phone,utxt);
+      if(!ulink){toast('No WhatsApp number on file for this customer.',true);return;}
+      window.open(ulink,'_blank');
+      var ustamp=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+      var uline='['+ustamp+'] Update sent by '+S.me.name+': '+tplFor(ukey).l;
+      var ur=await sb.from('jobs').update({notes:(ju.notes?ju.notes+'\n':'')+uline}).eq('id',id);
+      if(ur.error)throw ur.error;
+      S.modal={type:'job',id:id};await refreshAfter('WhatsApp opened for '+ju.customer+'. Tap send there.');break;}
+    case 'mark-approved':openModal({type:'approve',id:id});break;
+    case 'send-remind':{
+      var ex=enqById(id),msg=$('rm-text').value.trim();
+      if(!msg){toast('Write a message first.',true);return;}
+      var link=waLink(ex.whatsapp,msg);
+      if(!link){toast('No WhatsApp number on file for this enquiry.',true);return;}
+      window.open(link,'_blank');
+      var stamp=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+      var line='['+stamp+'] Reminder sent by '+S.me.name;
+      var rn=await sb.from('enquiries').update({notes:(ex.notes?ex.notes+'\n':'')+line}).eq('id',id);
+      if(rn.error)throw rn.error;
+      S.modal=null;await refreshAfter('Reminder opened in WhatsApp for '+ex.name+'.');break;}
+    case 'confirm-approve':{
+      var jb=jobById(id),note=$('ap-note').value.trim();
+      var stamp=new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata',day:'numeric',month:'short',hour:'numeric',minute:'2-digit'});
+      var line='['+stamp+'] Approved manually by '+S.me.name+(note?': '+note:' (no note given)');
+      var ra2=await sb.from('jobs').update({approval:'approved',stage:'final_fixing',notes:(jb.notes?jb.notes+'\n':'')+line}).eq('id',id);
+      if(ra2.error)throw ra2.error;
+      S.modal=null;await refreshAfter('Marked approved. Final fixing is unlocked.');break;}
+    case 'confirm-cancel':{
+      var note=$('c-note').value.trim(),why=$('c-reason').value+(note?' - '+note:'');
+      var rc=await sb.from('jobs').update({cancelled_at:new Date().toISOString(),cancel_reason:why}).eq('id',id);
+      if(rc.error)throw rc.error;
+      try{await sb.from('site_bookings').update({needs_staff_cancel:false}).eq('job_id',id);}catch(e){}
+      S.modal=null;await refreshAfter('Booking cancelled. It is kept under Reports.');break;}
+    case 'restore-booking':{
+      var rs=await sb.from('jobs').update({cancelled_at:null}).eq('id',id);
+      if(rs.error)throw rs.error;
+      await refreshAfter('Booking restored to the board.');break;}
+    case 'adv':await advance(jobById(id));break;
+    case 'approve-qc':
+      await upd(id,{qc_approved:true});await refreshAfter('Quality check approved.');break;
+    case 'save-invoice':
+      await upd(id,{invoice_no:$('inv').value.trim()||null});await refreshAfter('Invoice number saved.');break;
+    case 'save-enq':{
+      var nm=$('e-name').value.trim();
+      if(!nm){toast('Enter the customer name.',true);return;}
+      var svc=$('e-svc').value;
+      var r=await sb.from('enquiries').insert({name:nm,whatsapp:$('e-phone').value.trim()||null,source:$('e-src').value,service_id:svc?Number(svc):null,location_id:Number($('e-loc').value),next_follow_up:$('e-fu').value||null,owner_id:S.me.id});
+      if(r.error)throw r.error;
+      S.modal=null;await refreshAfter('Enquiry added for '+nm+'.');break;}
+    case 'save-lost':{
+      var r2=await sb.from('enquiries').update({status:'lost',lost_reason:$('l-reason').value,next_follow_up:null}).eq('id',id);
+      if(r2.error)throw r2.error;
+      S.modal=null;await refreshAfter('Marked as lost.');break;}
+    case 'save-booking':{
+      var name=$('b-name').value.trim();
+      if(!name){toast('Enter the customer name.',true);return;}
+      if(!$('b-consent').checked){toast('Confirm the customer agreed to WhatsApp updates first.',true);return;}
+      var addons=[];document.querySelectorAll('.b-ad').forEach(function(c){if(c.checked)addons.push(Number(c.value));});
+      var bt=bookingTotals();
+      var when=new Date($('b-date').value+'T'+$('b-time').value+':00+05:30').toISOString();
+      var bem=$('b-email').value.trim(),bad=$('b-addr').value.trim(),bse=el.getAttribute('data-sess')||'';
+      if(bem&&!/^\S+@\S+\.\S+$/.test(bem)){toast('That email address does not look right.',true);return;}
+      var bargs={p_name:name,p_whatsapp:$('b-phone').value,p_opt_in:true,p_service_id:Number($('b-svc').value),p_frame_size_id:Number($('b-frame').value),p_addon_ids:addons,p_location_id:Number($('b-loc').value),p_session_at:when,p_advance:bt.adv,p_enquiry_id:el.getAttribute('data-enq')||null,p_wix_booking_id:el.getAttribute('data-wix')||null};
+      if(bem)bargs.p_email=bem;if(bad)bargs.p_address=bad;if(bse)bargs.p_session_address=bse;
+      var rr=await sb.rpc('create_booking',bargs);
+      if(rr.error&&/p_email|p_address|p_session_address/.test(rr.error.message||'')){toast('Run 08_customer_contact.sql in Supabase first, or leave email and address blank.',true);return;}
+      if(rr.error)throw rr.error;
+      var ibx=el.getAttribute('data-inbox');if(ibx){await sb.from('booking_inbox').update({status:'handled'}).eq('id',Number(ibx));}
+      S.modal=null;S.view='jobs';await refreshAfter('Booking created. Fill in the job sheet below.');
+      if(rr.data){S.focusSheet=true;openModal({type:'job',id:rr.data});}break;}
+  }
+  }catch(e){fail(e);}
+});
+document.addEventListener('change',async function(ev){
+  var t=ev.target,el=t.closest('[data-change]');
+  try{
+  if(t.matches('input[type=file][data-upload]')){
+    var f=t.files&&t.files[0];if(!f)return;
+    await uploadFile(jobById(t.getAttribute('data-id')),t.getAttribute('data-upload'),f);return;
+  }
+  if(el){
+    var k=el.getAttribute('data-change'),id=el.getAttribute('data-id');
+    if(k==='loc'){S.locFilter=el.value;render();}
+    else if(k==='sh-field'){
+      var js=jobById(id),sk=el.getAttribute('data-key'),patch={};
+      patch[sk]=(el.type==='checkbox')?el.checked:el.value.trim();
+      if(sk==='delivery'){
+        var opt=SHEET_DELIVERY.filter(function(o){return o[0]===patch[sk];})[0];
+        if(opt&&opt[2]!=null){patch.delivery_date=addISO(js.casting_date,opt[2]+(js.wait_days||0));var de=$('sh-delivery_date');if(de)de.value=patch.delivery_date;}
+      }
+      await saveSheet(js,patch);
+    }
+    else if(k==='qc-check'){
+      var jq=jobById(id),qk=el.getAttribute('data-key'),cq=Object.assign({},jq.qc_checks||{});
+      cq[qk]=Object.assign({},cq[qk]||{},{ok:el.checked});
+      await saveQc(jq,cq,true);
+    }
+    else if(k==='qc-note'){
+      var jn=jobById(id),nk=el.getAttribute('data-key'),cn=Object.assign({},jn.qc_checks||{});
+      cn[nk]=Object.assign({},cn[nk]||{},{note:el.value.trim()});
+      await saveQc(jn,cn,false);
+    }
+    else if(k==='upd-tpl'){var jt=jobById(id);$('up-text').value=tplFor(el.value).fn(jt);}
+    else if(k==='assign'){await upd(id,{assigned_to:el.value});await refreshAfter('Assignee updated.');}
+    else if(k==='enq-status'){
+      var x=enqById(id),v=el.value;
+      if(v==='lost'){el.value=x.status;openModal({type:'lost',id:id});}
+      else if(v==='booked'){el.value=x.status;openModal({type:'booking',pre:{name:x.name,phone:x.whatsapp||'',service_id:x.service_id,loc:x.location_id,enqId:x.id}});}
+      else{var r=await sb.from('enquiries').update({status:v,lost_reason:null}).eq('id',id);if(r.error)throw r.error;await refreshAfter();}
+    }
+    return;
+  }
+  if(S.modal&&S.modal.type==='booking'&&/^b-/.test(t.id||''))updateSummary();
+  }catch(e){fail(e);}
+});
+document.addEventListener('input',function(ev){if(S.modal&&S.modal.type==='booking'&&ev.target.id==='b-adv')updateSummary();});
+document.addEventListener('keydown',function(ev){if(ev.key==='Escape'&&S.modal)closeModal();});
+
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.addEventListener('message',function(ev){
+    if(ev.data&&ev.data.type==='navigate'&&ev.data.view){
+      S.view=ev.data.view;S.modal=null;
+      if(S.me){render();window.scrollTo(0,0);}
+    }
+  });
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
