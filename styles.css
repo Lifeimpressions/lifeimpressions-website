@@ -99,3 +99,19 @@ footer{background:var(--deep);color:#C9BFB5;padding:48px 0 28px} footer a{color:
 .social{display:inline-flex;gap:10px;vertical-align:middle}.social a{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:50%;border:1.5px solid currentColor;color:inherit;text-decoration:none;transition:background .15s,color .15s,border-color .15s}
 .social a:hover{background:var(--orange);border-color:var(--orange);color:#1b0c00}.social.lg a{width:46px;height:46px;color:var(--ink)}.social.lg a:hover{color:#1b0c00}
 footer .social a{color:#F4EEE8}footer .social a:hover{color:#1b0c00}
+
+/* ---- booking wizard: stepper on top, action bar fixed to the bottom on every screen size ---- */
+.wiz{list-style:none;padding:0;margin:0 0 10px;display:flex;align-items:flex-start;counter-reset:w}
+.wiz li{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;font-size:.82rem;color:var(--ink2);font-weight:600}
+.wiz li:not(:first-child)::before{content:"";position:absolute;top:15px;right:50%;width:100%;height:2px;background:var(--line);z-index:0}
+.wiz li.done:not(:first-child)::before,.wiz li.on:not(:first-child)::before{background:var(--orange)}
+.wiz i{position:relative;z-index:1;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#fff;border:2px solid var(--line);font-style:normal;font-weight:700;color:var(--ink2)}
+.wiz li.on i{background:var(--orange);border-color:var(--orange);color:#1b0c00}.wiz li.done i{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}.wiz li.on{color:var(--ink)}
+.wiz-count{display:none;margin:0 0 18px;color:var(--ink2);font-size:.95rem}
+@media(max-width:640px){.wiz li span{display:none}.wiz li.on span{display:none}.wiz-count{display:block}}
+.wiz-page{padding-bottom:120px}
+.wnav{position:fixed;left:0;right:0;bottom:0;z-index:80;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 24px rgba(23,19,15,.08);padding:12px var(--gutter) calc(12px + env(safe-area-inset-bottom))}
+.wnav-in{max-width:calc(var(--max) - 2 * var(--gutter));margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.wnav-info{display:flex;flex-direction:column;line-height:1.25;min-width:0}.wnav-info span{font-size:.8rem;color:var(--ink2)}.wnav-info b{font:600 1.35rem var(--display)}.wnav-info small{color:var(--ink2);font-size:.8rem}
+.wnav-btns{display:flex;gap:10px}.wnav-btns .btn{min-height:50px;padding:0 26px}
+@media(max-width:560px){.wnav-in{gap:10px}.wnav-btns{flex:1}.wnav-btns .btn.primary{flex:1;padding:0 14px}.wnav-btns .btn.ghost{padding:0 16px}.wnav-info b{font-size:1.15rem}.wnav-info small{display:none}.wnav-info{flex:none}}

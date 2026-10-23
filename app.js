@@ -295,23 +295,26 @@ pages.book = async (q) => {
   if (B.service_id && !c.services.some((s) => s.id === B.service_id)) B.service_id = null;
   render(c);
 };
+const wbarInfo = (c) => { const p = price(c); return p ? `<span>Pay now</span> <b>${inr(p.advance)}</b><small>Total ${inr(p.bill)}</small>` : ""; };
+const wnav = (c, inner) => `<div class="wnav" role="region" aria-label="Booking actions"><div class="wnav-in"><div class="wnav-info" id="wsum">${wbarInfo(c)}</div><div class="wnav-btns">${inner}</div></div></div>`;
 function render(c) {
   const steps = ["Service & studio", "Date & time", "Your details", "Review & pay"];
-  main.innerHTML = `<div class="wrap"><div class="book"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Book a session</h1>
-    <ol class="prog" style="list-style:none;padding:0;margin:0 0 22px">${steps.map((s, i) => `<li><span class="${B.step === i + 1 ? "on" : B.step > i + 1 ? "done" : ""}">${i + 1}. ${s}</span></li>`).join("")}</ol>
+  main.innerHTML = `<div class="wrap wiz-page"><div class="book"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Book a session</h1>
+    <ol class="wiz" aria-label="Booking steps">${steps.map((s, i) => `<li class="${B.step === i + 1 ? "on" : B.step > i + 1 ? "done" : ""}"${B.step === i + 1 ? ' aria-current="step"' : ""}><i>${B.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
+    <p class="wiz-count">Step ${B.step} of ${steps.length}: <b>${steps[B.step - 1]}</b></p>
     <div class="panel" id="stepbox"></div></div><div id="sum">${summary(c)}</div></div></div>`;
-  const box = $("#stepbox"), refresh = () => { $("#sum").innerHTML = summary(c); }, go = (n) => { B.step = n; render(c); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  const box = $("#stepbox"), refresh = () => { $("#sum").innerHTML = summary(c); const w = $("#wsum"); if (w) w.innerHTML = wbarInfo(c); }, go = (n) => { B.step = n; render(c); window.scrollTo({ top: 0, behavior: "smooth" }); };
   if (B.step === 1) {
     box.innerHTML = `<h2 style="font-size:1.5rem;margin-bottom:6px">Where and what?</h2><label>Studio</label><div class="chips" id="locs">${c.locations.map((l) => `<button type="button" class="chip${B.location_id == l.id ? " on" : ""}" data-l="${l.id}">${esc(l.name)}</button>`).join("")}</div>
       <label style="margin-top:22px">Service</label><div class="pick" id="svcs">${c.services.map((s) => `<button type="button" class="opt${B.service_id == s.id ? " on" : ""}" data-s="${s.id}">${svcImg(s.name, 120, 120) ? `<img class="opt-img" loading="lazy" src="${svcImg(s.name, 120, 120)}" alt="" onerror="this.remove()">` : ""}<span style="flex:1"><b>${esc(s.name)}</b><small>${Number(s.duration_hours)} hr &middot; ${esc(catOf(s.name))}</small></span><span class="price">${s.is_from_price ? "<small>from </small>" : ""}${inr(s.price_incl_gst)}</span></button>`).join("")}</div>
-      <p style="margin-top:22px"><button class="btn primary" id="next" ${B.location_id && B.service_id ? "" : "disabled"}>Choose date &amp; time</button></p>`;
+      ${wnav(c, `<button class="btn primary" id="next" ${B.location_id && B.service_id ? "" : "disabled"}>Choose date &amp; time</button>`)}`;
     const chk = () => { $("#next").disabled = !(B.location_id && B.service_id); refresh(); };
     $$("#locs .chip").forEach((b) => b.onclick = () => { B.location_id = +b.dataset.l; B.quote = null; B.date = B.time = ""; B.pk = null; $$("#locs .chip").forEach((x) => x.classList.toggle("on", x === b)); chk(); });
     $$("#svcs .opt").forEach((b) => b.onclick = () => { B.service_id = +b.dataset.s; B.date = B.time = ""; B.pk = null; $$("#svcs .opt").forEach((x) => x.classList.toggle("on", x === b)); chk(); });
     $("#next").onclick = () => go(2);
   }
   if (B.step === 2) {
-    box.innerHTML = `<h2 style="font-size:1.5rem;margin-bottom:14px">Pick a date and time</h2><div id="pk"></div><p style="margin-top:24px"><button class="btn ghost" id="back">Back</button> <button class="btn primary" id="next" ${B.date && B.time ? "" : "disabled"}>Continue</button></p>`;
+    box.innerHTML = `<h2 style="font-size:1.5rem;margin-bottom:14px">Pick a date and time</h2><div id="pk"></div>${wnav(c, `<button class="btn ghost" id="back">Back</button><button class="btn primary" id="next" ${B.date && B.time ? "" : "disabled"}>Continue</button>`)}`;
     B.pk = B.pk || { location_id: B.location_id, service_id: B.service_id, date: B.date, time: B.time };
     picker($("#pk"), B.pk, () => { B.date = B.pk.date; B.time = B.pk.time; $("#next").disabled = !(B.date && B.time); refresh(); });
     $("#back").onclick = () => go(1); $("#next").onclick = () => go(3);
@@ -333,7 +336,7 @@ function render(c) {
         <div id="tq" style="margin-top:10px">${quoteHtml(c)}</div>`
       : `<label for="ad">Address (optional)</label><textarea id="ad" autocomplete="street-address">${esc(cu.address)}</textarea><div class="err" id="er-address"></div>`}
       <label for="nt">Anything we should know? (optional)</label><textarea id="nt">${esc(B.notes)}</textarea>
-      <p style="margin-top:22px"><button type="button" class="btn ghost" id="back">Back</button> <button class="btn primary">Continue</button></p></form>`;
+      ${wnav(c, `<button type="button" class="btn ghost" id="back">Back</button><button class="btn primary">Continue</button>`)}</form>`;
     $$("#fr .chip").forEach((b) => b.onclick = () => { B.frame_size_id = +b.dataset.f; $$("#fr .chip").forEach((x) => x.classList.toggle("on", x === b)); });
     c.addons.forEach((a) => $("#a" + a.id).onchange = (e) => { B.addon_ids = e.target.checked ? [...B.addon_ids, a.id] : B.addon_ids.filter((x) => x !== a.id); refresh(); });
     const grab = () => {
@@ -359,8 +362,8 @@ function render(c) {
     box.innerHTML = `<h2 style="font-size:1.5rem;margin-bottom:6px">Review &amp; pay</h2><p class="hint">Please accept each policy to continue.</p>
       ${CONSENTS.map(([k, t]) => `<div class="check"><input type="checkbox" id="c-${k}" ${B.consent[k] ? "checked" : ""}><label for="c-${k}">${t}</label></div>`).join("")}
       <h3 style="margin:22px 0 8px">How much to pay now?</h3><div class="pick" id="amt"><button type="button" class="opt${B.payFull ? "" : " on"}" data-f="0"><span><b>Pay ${inr(p.min)} now</b><small>Balance ${inr(p.bill - p.min)} at the studio</small></span></button>${p.bill > p.min ? `<button type="button" class="opt${B.payFull ? " on" : ""}" data-f="1"><span><b>Pay the full ${inr(p.bill)} now</b><small>${B.doorstep ? (p.trav ? "Nothing to pay at the studio, apart from toll and parking if any" : "Only the doorstep travel charge is paid at your session") : "Nothing to pay at the studio"}</small></span></button>` : ""}</div>
-      <div id="pe"></div><p style="margin-top:22px"><button class="btn ghost" id="back">Back</button> <button class="btn primary" id="pay" ${CONSENTS.every(([k]) => B.consent[k]) ? "" : "disabled"}>Pay ${inr(p.advance)} &amp; confirm</button></p>
-      <p class="hint">Secure payment by Razorpay. Your slot is held for a few minutes while you pay.</p>`;
+      <div id="pe"></div><p class="hint" style="margin-top:18px">Secure payment by Razorpay. Your slot is held for a few minutes while you pay.</p>
+      ${wnav(c, `<button class="btn ghost" id="back">Back</button><button class="btn primary" id="pay" ${CONSENTS.every(([k]) => B.consent[k]) ? "" : "disabled"}>Pay ${inr(p.advance)} &amp; confirm</button>`)}`;
     CONSENTS.forEach(([k]) => $("#c-" + k).onchange = (e) => { B.consent[k] = e.target.checked; $("#pay").disabled = !CONSENTS.every(([x]) => B.consent[x]); });
     $$("#amt .opt").forEach((b) => b.onclick = () => { B.payFull = b.dataset.f === "1"; render(c); });
     $("#back").onclick = () => go(3); $("#pay").onclick = () => pay(c, price(c));
