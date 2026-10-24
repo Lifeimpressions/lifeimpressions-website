@@ -55,9 +55,10 @@
  ],
  "videos": [
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/share/v/19fq4QHGBz/",
-   "title": "Lifeimpressions reel"
+   "type": "file",
+   "src": "assets/video/behindwoods-interview.mp4",
+   "poster": "assets/video/behindwoods-interview.jpg",
+   "title": "Behindwoods interview with Lifeimpressions"
   },
   {
    "type": "youtube",
