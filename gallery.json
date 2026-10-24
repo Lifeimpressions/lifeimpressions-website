@@ -91,39 +91,46 @@
    "title": "Unique gifts: 3D casting, baby casting, dream catchers"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/461405870901062/",
-   "title": "From our Facebook page, video 1"
+   "type": "file",
+   "src": "assets/video/clip-1.mp4",
+   "poster": "assets/video/clip-1.jpg",
+   "title": "Lifeimpressions casting moments 1"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/464461197262196/",
-   "title": "From our Facebook page, video 2"
+   "type": "file",
+   "src": "assets/video/clip-2.mp4",
+   "poster": "assets/video/clip-2.jpg",
+   "title": "Lifeimpressions casting moments 2"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/441850059523310/",
-   "title": "From our Facebook page, video 3"
+   "type": "file",
+   "src": "assets/video/clip-3.mp4",
+   "poster": "assets/video/clip-3.jpg",
+   "title": "Lifeimpressions casting moments 3"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/392903811084602/",
-   "title": "From our Facebook page, video 4"
+   "type": "file",
+   "src": "assets/video/clip-4.mp4",
+   "poster": "assets/video/clip-4.jpg",
+   "title": "Lifeimpressions casting moments 4"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/441852329523083/",
-   "title": "From our Facebook page, video 5"
+   "type": "file",
+   "src": "assets/video/clip-5.mp4",
+   "poster": "assets/video/clip-5.jpg",
+   "title": "Lifeimpressions casting moments 5"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/547090232332625/",
-   "title": "From our Facebook page, video 6"
+   "type": "file",
+   "src": "assets/video/clip-6.mp4",
+   "poster": "assets/video/clip-6.jpg",
+   "title": "Lifeimpressions casting moments 6"
   },
   {
-   "type": "facebook",
-   "url": "https://www.facebook.com/babyhandcastingchennai/videos/441852032856446/",
-   "title": "From our Facebook page, video 7"
+   "type": "file",
+   "src": "assets/video/clip-7.mp4",
+   "poster": "assets/video/clip-7.jpg",
+   "title": "Lifeimpressions casting moments 7"
   }
  ]
 }

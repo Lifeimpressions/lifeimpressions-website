@@ -104,9 +104,9 @@ pages.services = async () => {
 };
 const PLAY = `<svg viewBox="0 0 24 24" width="30" height="30" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg>`;
 const vidCard = (v, i) => { const yt = v.type === "youtube" || v.type === "file";
-  const thumb = v.type === "file" ? `<img loading="lazy" src="${esc(v.poster)}" alt="">` : yt ? `<img loading="lazy" src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" onerror="this.remove()">` : `<span class="vfb">Facebook video</span>`;
+  const thumb = v.type === "file" ? `<img class="pimg" loading="lazy" src="${esc(v.poster)}" alt="">` : yt ? `<img loading="lazy" src="https://i.ytimg.com/vi/${esc(v.id)}/hqdefault.jpg" alt="" onerror="this.remove()">` : `<span class="vfb">Facebook video</span>`;
   return `<figure class="vid"><button type="button" class="vbox${yt ? "" : " fb"}" data-i="${i}" aria-label="Play: ${esc(v.title)}">${thumb}<span class="vplay">${PLAY}</span></button><figcaption>${esc(v.title)}</figcaption></figure>`; };
-const playVideo = (btn, v) => { if (v.type === "file") { btn.outerHTML = `<div class="vbox playing"><video src="${esc(v.src)}" poster="${esc(v.poster)}" controls autoplay playsinline preload="metadata" title="${esc(v.title)}"></video></div>`; return; }
+const playVideo = (btn, v) => { if (v.type === "file") { btn.outerHTML = `<div class="vbox playing"><video class="pv" src="${esc(v.src)}" poster="${esc(v.poster)}" controls autoplay playsinline preload="metadata" title="${esc(v.title)}"></video></div>`; return; }
   const src = v.type === "youtube" ? `https://www.youtube-nocookie.com/embed/${encodeURIComponent(v.id)}?autoplay=1&rel=0` : `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(v.url)}&show_text=false&autoplay=true`;
   btn.outerHTML = `<div class="vbox playing${v.type === "facebook" ? " fb" : ""}"><iframe src="${src}" title="${esc(v.title)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen loading="lazy"></iframe></div>`; };
 pages.gallery = async () => {

@@ -126,3 +126,4 @@ footer .social a{color:#F4EEE8}footer .social a:hover{color:#1b0c00}
 .gtabs button small{font-weight:500;opacity:.7;margin-left:4px}
 .gtabs button.on{color:var(--ink);border-bottom-color:var(--orange)}
 .vbox video{position:absolute;inset:0;width:100%;height:100%;background:#000}
+.vbox video,.vbox img.pimg{object-fit:contain}
