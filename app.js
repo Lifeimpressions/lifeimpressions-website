@@ -466,7 +466,7 @@ const FR_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden
 function frFront(d, edit) {   // straight-on view with a little parallax
   return `<div class="sb ${frLayout(frSize(d))}" ${edit ? 'id="sb"' : ""} data-view="front" style="${frVars(d)}">${FR_DEFS}<div class="sb-tilt"><div class="sb-frame"><div class="sb-liner">${frBoard(d, edit)}</div><div class="sb-glass"></div></div></div></div>`;
 }
-function fr3D(d) {            // real 3D box: frame sides, inner walls, recessed board, castings raised above it
+function fr3DCss(d) {         // CSS fallback: real 3D box: frame sides, inner walls, recessed board, castings raised above it
   return `<div class="sb sb3 ${frLayout(frSize(d))}" id="sb" data-view="3d" style="${frVars(d)}">${FR_DEFS}<div class="sb3d">
     <div class="b3 sh"></div>
     <div class="b3 o-top"></div><div class="b3 o-bot"></div><div class="b3 o-l"></div><div class="b3 o-r"></div>
@@ -481,12 +481,12 @@ function frWall(d) {
   return `<div class="wall${own ? " own" : ""}" id="wall" style="background-color:${w.bg};${own ? `background-image:url(${w.own});` : ""}">
     ${own ? "" : `<div class="wall-skirt"></div><div class="wall-floor"></div><div class="wall-ruler"><span>1 m</span></div>${FR_SOFA}`}
     <div class="wall-frame" id="wf" style="left:${leftPct}%;top:${topPct}%;width:${widthPct}%">${frFront(d, false)}</div></div>
-    <div class="wall-ctl">${own ? `<label for="wsc">Frame size on your wall</label><input id="wsc" type="range" min="10" max="80" value="${w.scale}"><p class="hint" style="margin:6px 0 0">Drag the frame to move it. Not to scale: match it to your wall with the slider.</p><button type="button" class="btn ghost small" id="wsample" style="margin-top:8px">Back to sample room</button>`
+    <div class="wall-ctl"><button type="button" class="btn gold small" id="frar">View on my wall (AR, on your phone)</button><p class="hint" id="frarn" style="margin:6px 0 10px"></p>${own ? `<label for="wsc">Frame size on your wall</label><input id="wsc" type="range" min="10" max="80" value="${w.scale}"><p class="hint" style="margin:6px 0 0">Drag the frame to move it. Not to scale: match it to your wall with the slider.</p><button type="button" class="btn ghost small" id="wsample" style="margin-top:8px">Back to sample room</button>`
       : `<div class="wall-sw" role="group" aria-label="Wall colour">${FR_WALLS.map((c) => `<button type="button" class="wsw${w.bg === c ? " on" : ""}" data-c="${c}" style="background:${c}" aria-label="Wall colour"></button>`).join("")}</div>
         <p class="hint" style="margin:6px 0 8px">Shown to scale: this frame is ${s.w} x ${s.h} cm, and the sofa is about 1.8 m wide.</p>
         <label class="btn ghost small" for="wfile" style="cursor:pointer">Use a photo of my own wall</label><input id="wfile" type="file" accept="image/*" hidden>`}</div>`;
 }
-function frPreview(d) { return FR.view === "3d" ? fr3D(d) : FR.view === "wall" ? frWall(d) : frFront(d, true); }
+function frPreview(d) { return FR.view === "3d" ? `<div class="fr-gl" id="frgl"><p class="fr-glmsg">Loading the 3D view…</p></div><div class="fr-glbar" id="frglbar"></div>` : FR.view === "wall" ? frWall(d) : frFront(d, true); }
 function frBindWall(d, refresh) {
   const w = $("#wall"); if (!w) return;
   $$(".wsw").forEach((b) => b.onclick = () => { FR.wall.bg = b.dataset.c; refresh(); });
@@ -555,7 +555,7 @@ pages.frame = async () => {
       <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div class="fr-views" role="tablist" aria-label="Preview view">${[["front", "Front"], ["3d", "3D view"], ["wall", "On my wall"]].map(([k, n]) => `<button type="button" role="tab" data-v="${k}" class="${FR.view === k ? "on" : ""}" aria-selected="${FR.view === k}">${n}</button>`).join("")}</div><div id="frp">${frPreview(d)}</div><p class="hint fr-size" id="frhint"></p></div></div>
       <div class="fr-ctl"><div class="panel" id="frbox"><h2 style="font-size:1.5rem;margin-bottom:14px">${lead}</h2>${FR.img && FR.step <= 4 ? `<div class="fr-zoom"><label for="frz">Photo zoom <small class="hint">(drag the photo to reposition)</small></label><input id="frz" type="range" min="1" max="3" step="0.02" value="${FR.zoom}"><div id="frnote">${frDpiNote()}</div></div>` : ""}<div id="frstep"></div></div></div></div></div>
       <div class="wnav" role="region" aria-label="Frame actions"><div class="wnav-in"><div class="wnav-info"><span>No payment now</span><small>We reply with the price</small></div><div class="wnav-btns" id="frbtn"></div></div></div></div>`;
-    const bx = $("#frstep"), btn = $("#frbtn"), refreshPrev = () => { $("#frp").innerHTML = frPreview(d); frBindDrag(); frTilt(); frBindWall(d, refreshPrev); const h = $("#frhint"); if (h) h.textContent = FR.view === "3d" ? "Move over the frame, or drag it, to turn it and see the depth." : FR.view === "front" ? "Move over the frame to see the depth. Drag the photo to reposition it." : ""; };
+    const bx = $("#frstep"), btn = $("#frbtn"), refreshPrev = () => { if (FR.view === "3d" && GL.viewer && GL.host && document.contains(GL.host)) { frGlSoon(d); return; } frGlDispose(); $("#frp").innerHTML = frPreview(d); frBindDrag(); frTilt(); frBindWall(d, refreshPrev); if (FR.view === "3d") frGlMount(d); const ar = $("#frar"); if (ar) ar.onclick = () => frAr(d); const h = $("#frhint"); if (h) h.textContent = FR.view === "3d" ? "Drag to turn the frame · scroll or pinch to zoom." : FR.view === "front" ? "Move over the frame to see the depth. Drag the photo to reposition it." : ""; };
     const keepScroll = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
     const bind = (id, key) => { const el = $(id); if (el) el.oninput = () => { FR[key] = el.value; refreshPrev(); }; };
     if (FR.step === 1) {
@@ -616,6 +616,63 @@ pages.frame = async () => {
   };
   render();
 };
+
+
+// ---------- three.js 3D view + AR wall (engine ported from Paramount Frame Works, see frame3d.js) ----------
+const GL = { viewer: null, mod: null, host: null, timer: 0, token: 0, failed: false };
+const frGlDispose = () => { clearTimeout(GL.timer); GL.token++; try { GL.viewer && GL.viewer.dispose(); } catch (e) {} GL.viewer = null; GL.host = null; };
+async function frGlSpec(d) {
+  const s = frSize(d), m = d.models.find((x) => x.id === FR.model) || d.models[0], bd = d.boards.find((x) => x.id === FR.board) || d.boards[0], mod = GL.mod;
+  const border = 0, deep = mod.PROFILES.deep, face = deep.W;
+  const board = await mod.drawBoard({ wCm: s.w, hCm: s.h, boardColor: bd.color, dark: bd.id === "black", img: FR.img ? await new Promise((r) => { const i = new Image(); i.onload = () => r(i); i.onerror = () => r(null); i.src = FR.img.url; }) : null,
+    zoom: FR.zoom, x: FR.x, y: FR.y, name: FR.name.trim(), castUrl: "assets/" + (s.w / s.h >= 1.6 ? "casts-row" : "casts-grid") + ".png",
+    charms: [[frDate(FR.dob), "DD.MM.YY"], [FR.weight.trim(), "0.0 Kg"], [frTime(FR.tob), "0:00 PM"], [FR.height.trim(), "00 cm"]].map(([v, g]) => ({ text: v || g, ghost: !v })) });
+  // the size chosen is the opening (what you see inside the frame), so the frame wraps outside it
+  return { profile: deep, frameColor: m.color, innerWmm: s.w * 10, innerHmm: s.h * 10, board: board.board, gold: board.gold, glass: true };
+}
+async function frGlUpdate(d) {
+  const tok = ++GL.token;
+  try { const spec = await frGlSpec(d); if (tok !== GL.token || !GL.viewer) return; const k = frSize(d).id; GL.viewer.update(spec, GL.k !== k); GL.k = k; }
+  catch (e) { console.warn("3D update failed", e); frGlFallback(d); }
+}
+function frGlFallback(d) {
+  GL.failed = true; frGlDispose();
+  const p = $("#frp"); if (p) { p.innerHTML = fr3DCss(d); frTilt(); }
+}
+async function frGlMount(d) {
+  const host = $("#frgl"); if (!host) return;
+  if (GL.failed) return frGlFallback(d);
+  try {
+    if (!GL.mod) GL.mod = await import("./frame3d.js");
+    if (!$("#frgl")) return;
+    GL.host = host; GL.k = null;
+    GL.viewer = GL.mod.createFrameViewer(host);
+    host.querySelector(".fr-glmsg")?.remove();
+    const bar = $("#frglbar");
+    bar.innerHTML = [["angle", "Angle"], ["front", "Front"], ["corner", "Corner"], ["back", "Back"]].map(([v, n]) => `<button type="button" data-cv="${v}"${v === "angle" ? ' class="on"' : ""}>${n}</button>`).join("") + `<button type="button" id="frspin">Slow turn</button>`;
+    let spin = false;
+    $$("[data-cv]", bar).forEach((b) => b.onclick = () => { GL.viewer.setView(b.dataset.cv); $$("[data-cv]", bar).forEach((x) => x.classList.toggle("on", x === b)); });
+    $("#frspin").onclick = (e) => { spin = !spin; GL.viewer.setSpin(spin); e.target.classList.toggle("on", spin); };
+    frGlUpdate(d);
+  } catch (e) { console.warn("3D view unavailable, using the simple one", e); frGlFallback(d); }
+}
+const frGlSoon = (d) => { clearTimeout(GL.timer); GL.timer = setTimeout(() => frGlUpdate(d), 220); };
+
+// "View on my wall": build a GLB of this exact frame and open it in <model-viewer> (WebXR on Android, Quick Look on iPhone)
+async function frAr(d) {
+  const btn = $("#frar"), note = $("#frarn"); btn.disabled = true; note.textContent = "Preparing your frame…";
+  try {
+    GL.mod = GL.mod || await import("./frame3d.js");
+    if (!customElements.get("model-viewer")) await import("https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js");
+    const blob = await GL.mod.frameGlb(await frGlSpec(d)), url = URL.createObjectURL(blob);
+    let dlg = $("#frardlg"); if (dlg) dlg.remove();
+    dlg = document.createElement("div"); dlg.id = "frardlg"; dlg.className = "fr-ardlg";
+    dlg.innerHTML = `<div class="fr-arbox"><button type="button" class="fr-arx" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" camera-controls auto-rotate shadow-intensity="0.6" environment-image="neutral" alt="Your framed shadowbox" style="width:100%;height:100%"><button slot="ar-button" class="btn gold fr-arbtn" type="button">See it on my wall</button></model-viewer><p class="hint">Point your phone at a wall and tap “See it on my wall”. Shown at the real size (${frSize(d).w} x ${frSize(d).h} cm opening).</p></div>`;
+    document.body.appendChild(dlg); dlg.querySelector(".fr-arx").onclick = () => { dlg.remove(); URL.revokeObjectURL(url); };
+    note.textContent = "";
+  } catch (e) { console.warn(e); note.textContent = "Could not prepare the AR view on this device. The sample room above still works."; }
+  btn.disabled = false;
+}
 
 // ---------- router ----------
 const TITLES = { home: "Lifeimpressions | Baby hand & foot casting", services: "Services & prices", frame: "Customize my frame", book: "Book a session", gallery: "Gallery", locations: "Our studios", shop: "Shop", franchise: "Franchise", contact: "Contact us", faq: "FAQ", manage: "Your booking" };

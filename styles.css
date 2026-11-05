@@ -211,3 +211,13 @@ footer .social a{color:#F4EEE8}footer .social a:hover{color:#1b0c00}
 .wall-sw{display:flex;justify-content:center;gap:8px;margin-bottom:6px}.wsw{width:30px;height:30px;border-radius:50%;border:2px solid #fff;box-shadow:0 0 0 1px #bbb;cursor:pointer;padding:0}.wsw.on{box-shadow:0 0 0 2px var(--orange)}
 .wall-ctl input[type=range]{width:100%}
 @media(max-width:860px){.fr-prev:has(.wall){position:static}}
+
+/* three.js view + AR */
+.fr-gl{position:relative;width:100%;aspect-ratio:4/3;background:radial-gradient(ellipse at 50% 40%,#f4efe6,#d9d2c4);border-radius:12px;overflow:hidden}
+.fr-glmsg{position:absolute;inset:0;display:grid;place-items:center;margin:0;color:#6b6358}
+.fr-glbar{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.fr-glbar button{border:1px solid #cfc6b4;background:#fff;border-radius:999px;padding:6px 12px;font:inherit;font-size:.85rem;cursor:pointer}
+.fr-glbar button.on{background:#1b1917;color:#fff;border-color:#1b1917}
+.fr-ardlg{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.6);display:grid;place-items:center;padding:16px}
+.fr-arbox{position:relative;background:#fff;border-radius:14px;width:min(560px,100%);height:min(78vh,640px);padding:12px;display:flex;flex-direction:column;gap:8px}
+.fr-arbox model-viewer{flex:1;min-height:0}.fr-arx{position:absolute;right:10px;top:6px;z-index:2;border:0;background:none;font-size:28px;cursor:pointer}
+.fr-arbtn{position:absolute;bottom:14px;left:50%;transform:translateX(-50%)}
