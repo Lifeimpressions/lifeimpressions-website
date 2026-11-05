@@ -1,0 +1,23 @@
+{
+ "_note": "Edit this file to change the frame models, sizes, mounts and glass options. The 6 models below are PLACEHOLDERS until the real ones are decided.",
+ "models": [
+  { "id": "classic-black", "name": "Classic Black", "note": "Slim matte black", "color": "#1c1a18", "edge": "#3a3633", "width": 5 },
+  { "id": "natural-oak", "name": "Natural Oak", "note": "Light wood grain", "color": "#c9a46a", "edge": "#e2c48f", "width": 6 },
+  { "id": "walnut", "name": "Walnut", "note": "Deep brown wood", "color": "#5a3a22", "edge": "#7a5435", "width": 6 },
+  { "id": "golden", "name": "Golden", "note": "Warm gold finish", "color": "#b8903c", "edge": "#e6c873", "width": 7 },
+  { "id": "pure-white", "name": "Pure White", "note": "Clean white", "color": "#f4f2ee", "edge": "#ffffff", "width": 5 },
+  { "id": "wide-black", "name": "Wide Black", "note": "Bold wide border", "color": "#141311", "edge": "#2c2a27", "width": 11 }
+ ],
+ "sizes": [
+  { "id": "8x10", "w": 8, "h": 10 }, { "id": "10x12", "w": 10, "h": 12 }, { "id": "12x16", "w": 12, "h": 16 },
+  { "id": "12x18", "w": 12, "h": 18 }, { "id": "16x20", "w": 16, "h": 20 }, { "id": "20x24", "w": 20, "h": 24 }, { "id": "24x36", "w": 24, "h": 36 }
+ ],
+ "mounts": [
+  { "id": "none", "name": "No mount", "color": "" }, { "id": "white", "name": "White", "color": "#ffffff" },
+  { "id": "ivory", "name": "Ivory", "color": "#f3ead7" }, { "id": "black", "name": "Black", "color": "#1c1a18" }
+ ],
+ "glass": [
+  { "id": "clear", "name": "Clear glass", "note": "Standard, crisp" }, { "id": "anti-glare", "name": "Anti-glare glass", "note": "Less reflection under lights" },
+  { "id": "acrylic", "name": "Acrylic", "note": "Lighter, safer for kids' rooms" }
+ ]
+}

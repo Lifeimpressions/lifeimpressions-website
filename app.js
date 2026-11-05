@@ -84,6 +84,7 @@ pages.home = async () => {
     <div><h3>Get your confirmation</h3><p class="hint">Email with a link to view, reschedule or cancel up to 24 hours before.</p></div></div></div></section>
   <section class="s soft"><div class="wrap"><div class="head"><div><h2>What we cast</h2><p>Every session includes impressions, casting, printing and framing.</p></div><a class="btn ghost small" href="#/services">All services</a></div>
     <div class="grid" id="cats"></div></div></section>
+  <section class="s soft"><div class="wrap fr-band"><div><h2 style="margin:0 0 6px">Customize my frame</h2><p class="hint" style="margin:0;max-width:40em">Upload your own photo, pick a frame, size and mount, and see it before you send. We reply with the price.</p></div><a class="btn primary" href="#/frame">Design my frame</a></div></section>
   <section class="s deep"><div class="wrap"><div class="head"><div><h2>Made carefully, made to last</h2><p>Baby skin safe, non-toxic and hand-crafted. Founded in 2015 by Keerthi Nagacharan.</p></div></div>
     <div class="stats"><div><b>100%</b>baby skin safe</div><div><b>Non-toxic</b>material</div><div><b>1 Lakh+</b>lifecasting done</div><div><b>3 weeks</b>typical delivery</div></div></div></section>
   <section class="s"><div class="wrap"><div class="head"><div><h2>Visit a studio</h2></div></div><div class="grid" id="studios"></div>
@@ -433,8 +434,137 @@ pages.manage = async (q, token) => {
     $("#no").onclick = () => (act.innerHTML = ""); $("#yes").onclick = async () => { $("#yes").disabled = true; try { await post("/cancel", { token, reason: $("#rsn").value }); pages.manage(new URLSearchParams(), token); } catch (e) { $("#ae").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; $("#yes").disabled = false; } }; };
 };
 
+// ---------- Customize my frame ----------
+let FRAMEDATA = null;
+const loadFrameData = async () => { if (FRAMEDATA) return FRAMEDATA; try { FRAMEDATA = await (await fetch("frames.json", { cache: "no-cache" })).json(); } catch { FRAMEDATA = { models: [], sizes: [], mounts: [], glass: [] }; } return FRAMEDATA; };
+const FRAME_API = () => String(C.API).replace(/\/site-api\/?$/, "/frame-enquiry");
+const FR = { step: 1, img: null, model: null, size: null, land: false, mount: null, glass: null, caption: "", zoom: 1, x: 0, y: 0, delivery: "courier", studio: "Chennai", contact: { name: "", phone: "", email: "", address: "" }, done: null };
+const FR_STEPS = ["Photo", "Frame", "Details", "Send"];
+const frSize = (d) => d.sizes.find((s) => s.id === FR.size) || d.sizes[0];
+const frLabel = (s) => s ? `${s.w} x ${s.h} in` : "";
+function frPreview(d) {
+  const m = d.models.find((x) => x.id === FR.model) || d.models[0], mt = d.mounts.find((x) => x.id === FR.mount) || d.mounts[0], s = frSize(d);
+  const w = FR.land ? s.h : s.w, h = FR.land ? s.w : s.h, mat = mt && mt.color ? Math.round(1.25 / w * 1000) / 10 : 0;
+  const cap = FR.caption.trim();
+  return `<div class="fr-stage"><div class="fr-frame" id="frf" style="aspect-ratio:${w}/${h};--fw:${m ? m.width : 5}px;--fc:${m ? m.color : "#222"};--fe:${m ? m.edge : "#444"}">
+    <div class="fr-mat" style="${mt && mt.color ? `background:${mt.color};padding:${mat}%` : "padding:0"}">
+      <div class="fr-win" id="frw">${FR.img ? `<img id="fri" src="${FR.img.url}" alt="Your photo in the frame" draggable="false" style="transform:translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})">` : `<div class="fr-empty">Your photo appears here</div>`}</div>
+      ${cap ? `<div class="fr-cap" style="${mt && mt.id === "black" ? "color:#eee" : ""}">${esc(cap)}</div>` : ""}</div></div></div>
+    <p class="hint fr-size">${frLabel(s)}${FR.land ? ", landscape" : ", portrait"}</p>`;
+}
+function frDpiNote(d) {
+  if (!FR.img) return ""; const s = frSize(d), longIn = Math.max(s.w, s.h), longPx = Math.max(FR.img.w, FR.img.h) / FR.zoom, dpi = longPx / longIn;
+  return dpi < 130 ? `<div class="note" style="margin-top:12px">This photo is small for ${frLabel(s)}, so it may print a little soft. Send it anyway and we will tell you if a larger copy is needed.</div>` : "";
+}
+function frBindDrag() {
+  const w = $("#frw"); if (!w || !FR.img) return; let st = null;
+  w.onpointerdown = (e) => { st = { px: e.clientX, py: e.clientY, x: FR.x, y: FR.y }; w.setPointerCapture(e.pointerId); w.classList.add("drag"); };
+  w.onpointermove = (e) => { if (!st) return; const r = w.getBoundingClientRect(), lim = Math.max(0, (FR.zoom - 1) * 50);
+    FR.x = Math.max(-lim, Math.min(lim, st.x + (e.clientX - st.px) / r.width * 100)); FR.y = Math.max(-lim, Math.min(lim, st.y + (e.clientY - st.py) / r.height * 100));
+    const i = $("#fri"); if (i) i.style.transform = `translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})`; };
+  w.onpointerup = w.onpointercancel = () => { st = null; w.classList.remove("drag"); };
+}
+function frSetZoom(z) { FR.zoom = z; const lim = Math.max(0, (z - 1) * 50); FR.x = Math.max(-lim, Math.min(lim, FR.x)); FR.y = Math.max(-lim, Math.min(lim, FR.y)); const i = $("#fri"); if (i) i.style.transform = `translate(${FR.x}%,${FR.y}%) scale(${z})`; }
+const frUpload = (file) => new Promise((res, rej) => {
+  if (!file || !/^image\//.test(file.type || "")) return rej(new Error("Please choose a photo (JPG, PNG or WebP)."));
+  if (file.size > 40 * 1024 * 1024) return rej(new Error("That photo is larger than 40 MB. Please choose a smaller one."));
+  const url = URL.createObjectURL(file), im = new Image();
+  im.onload = () => res({ url, w: im.naturalWidth, h: im.naturalHeight, file, name: file.name });
+  im.onerror = () => rej(new Error("We could not open this photo. If it is an iPhone HEIC photo, please share it as JPG (Settings > Camera > Formats > Most Compatible) and try again."));
+  im.src = url;
+});
+async function frBlob() {   // sends a copy up to 3000 px on the long side, JPEG, under about 5.5 MB
+  const im = await new Promise((r, j) => { const i = new Image(); i.onload = () => r(i); i.onerror = j; i.src = FR.img.url; });
+  for (const [maxPx, q] of [[3000, 0.9], [3000, 0.8], [2400, 0.8], [1800, 0.8]]) {
+    const k = Math.min(1, maxPx / Math.max(im.naturalWidth, im.naturalHeight)), c = document.createElement("canvas"); c.width = Math.round(im.naturalWidth * k); c.height = Math.round(im.naturalHeight * k);
+    const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+    const b = await new Promise((r) => c.toBlob(r, "image/jpeg", q)); if (b && b.size <= 5.5 * 1024 * 1024) return b;
+  }
+  throw new Error("This photo is too large to send. Please choose a smaller one.");
+}
+function frSummaryText(d) {
+  const m = d.models.find((x) => x.id === FR.model), mt = d.mounts.find((x) => x.id === FR.mount), g = d.glass.find((x) => x.id === FR.glass);
+  return `Frame: ${m ? m.name : "-"}\nSize: ${frLabel(frSize(d))} (${FR.land ? "landscape" : "portrait"})\nMount: ${mt ? mt.name : "-"}\nGlass: ${g ? g.name : "-"}\nCaption: ${FR.caption.trim() || "none"}\nDelivery: ${FR.delivery === "courier" ? "Courier to " + FR.contact.address : "Pick up at " + FR.studio + " studio"}`;
+}
+pages.frame = async () => {
+  main.innerHTML = loading(); const d = await loadFrameData();
+  if (!d.models.length) { main.innerHTML = failBox("This page could not load. Please try again."); return; }
+  if (!FR.model) { FR.model = d.models[0].id; FR.size = d.sizes[0].id; FR.mount = d.mounts[1] ? d.mounts[1].id : d.mounts[0].id; FR.glass = d.glass[0].id; }
+  const render = () => {
+    if (FR.done) { const w = STUDIOS.find((s) => s.name === FR.studio) || STUDIOS[0];
+      main.innerHTML = `<div class="wrap" style="padding:40px var(--gutter) 80px"><div class="panel" style="max-width:640px;margin:0 auto"><div class="ok-box"><div class="tick">&#10003;</div><h1 style="font-size:1.8rem">We have your frame request</h1>
+        <p class="hint">Reference <b>${esc(FR.done.ref || "")}</b>. We will check your photo and message you on WhatsApp with the price and delivery time. You pay nothing now.</p></div>
+        <pre class="fr-sum">${esc(frSummaryText(d))}</pre><p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#/">Back to home</a><button class="btn ghost" id="again">Design another frame</button></p></div></div>`;
+      $("#again").onclick = () => { Object.assign(FR, { step: 1, img: null, caption: "", zoom: 1, x: 0, y: 0, done: null }); render(); }; return; }
+    const lead = { 1: "Upload your photo", 2: "Choose a frame", 3: "Size, mount and glass", 4: "Where should we send it?" }[FR.step];
+    const ok1 = !!FR.img;
+    main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Customize my frame</h1>
+      <ol class="wiz" aria-label="Steps">${FR_STEPS.map((s, i) => `<li class="${FR.step === i + 1 ? "on" : FR.step > i + 1 ? "done" : ""}"${FR.step === i + 1 ? ' aria-current="step"' : ""}><i>${FR.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
+      <p class="wiz-count">Step ${FR.step} of ${FR_STEPS.length}: <b>${FR_STEPS[FR.step - 1]}</b></p>
+      <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div id="frp">${frPreview(d)}</div></div></div>
+      <div class="fr-ctl"><div class="panel" id="frbox"><h2 style="font-size:1.5rem;margin-bottom:14px">${lead}</h2>${FR.img && FR.step <= 3 ? `<div class="fr-zoom"><label for="frz">Zoom <small class="hint">(drag the photo to reposition)</small></label><input id="frz" type="range" min="1" max="3" step="0.02" value="${FR.zoom}"><div id="frnote">${frDpiNote(d)}</div></div>` : ""}<div id="frstep"></div></div></div></div></div>
+      <div class="wnav" role="region" aria-label="Frame actions"><div class="wnav-in"><div class="wnav-info"><span>No payment now</span><small>We reply with the price</small></div><div class="wnav-btns" id="frbtn"></div></div></div></div>`;
+    const bx = $("#frstep"), btn = $("#frbtn");
+    if (FR.step === 1) {
+      bx.innerHTML = `<label class="fr-drop" for="frfile"><input id="frfile" type="file" accept="image/*" hidden><b>${FR.img ? "Change photo" : "Choose a photo"}</b><span>JPG, PNG or WebP. A sharp, high-resolution photo prints best.</span></label><div id="fre"></div>
+        <p class="hint" style="margin-top:12px">Your photo is used only to make your frame.</p>`;
+      btn.innerHTML = `<button class="btn primary" id="n1" ${ok1 ? "" : "disabled"}>Choose frame</button>`;
+      const take = async (f) => { try { const i = await frUpload(f); FR.img = i; FR.zoom = 1; FR.x = FR.y = 0; FR.land = i.w > i.h; render(); } catch (e) { $("#fre").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; } };
+      const fi = $("#frfile"); $(".fr-drop").ondragover = (e) => e.preventDefault(); $(".fr-drop").ondrop = (e) => { e.preventDefault(); take(e.dataTransfer.files[0]); };
+      fi.onchange = () => take(fi.files[0]);
+
+      if ($("#n1")) $("#n1").onclick = () => { FR.step = 2; render(); window.scrollTo({ top: 0 }); };
+    } else if (FR.step === 2) {
+      bx.innerHTML = `<div class="fr-models">${d.models.map((m) => `<button type="button" class="fr-m${FR.model === m.id ? " on" : ""}" data-id="${esc(m.id)}" aria-pressed="${FR.model === m.id}"><span class="fr-sw" style="background:${m.color};border-color:${m.edge}"></span><b>${esc(m.name)}</b><small>${esc(m.note || "")}</small></button>`).join("")}</div>`;
+      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Size &amp; details</button>`;
+      $$(".fr-m", bx).forEach((b) => b.onclick = () => { FR.model = b.dataset.id; keepScroll(); });
+    } else if (FR.step === 3) {
+      bx.innerHTML = `<label>Size</label><div class="chips" id="szs">${d.sizes.map((s) => `<button type="button" class="chip${FR.size === s.id ? " on" : ""}" data-id="${esc(s.id)}">${frLabel(s)}</button>`).join("")}</div>
+        <label style="margin-top:16px">Orientation</label><div class="chips"><button type="button" class="chip${FR.land ? "" : " on"}" data-o="p">Portrait</button><button type="button" class="chip${FR.land ? " on" : ""}" data-o="l">Landscape</button></div>
+        <label style="margin-top:16px">Mount (border around the photo)</label><div class="chips">${d.mounts.map((m) => `<button type="button" class="chip${FR.mount === m.id ? " on" : ""}" data-m="${esc(m.id)}">${m.color ? `<i class="fr-dot" style="background:${m.color}"></i>` : ""}${esc(m.name)}</button>`).join("")}</div>
+        <label style="margin-top:16px">Glass</label><div class="pick">${d.glass.map((g) => `<button type="button" class="opt${FR.glass === g.id ? " on" : ""}" data-g="${esc(g.id)}"><span><b>${esc(g.name)}</b><small>${esc(g.note || "")}</small></span></button>`).join("")}</div>
+        <label for="frc" style="margin-top:16px">Caption (optional)</label><input id="frc" maxlength="60" value="${esc(FR.caption)}" placeholder="For example: Aarav, 12 Oct 2026"><p class="hint" style="margin:6px 0 0">Printed below the photo, up to 60 characters.</p>`;
+      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Continue</button>`;
+      $$("[data-id]", bx).forEach((b) => b.onclick = () => { FR.size = b.dataset.id; keepScroll(); }); $$("[data-o]", bx).forEach((b) => b.onclick = () => { FR.land = b.dataset.o === "l"; keepScroll(); });
+      $$("[data-m]", bx).forEach((b) => b.onclick = () => { FR.mount = b.dataset.m; keepScroll(); }); $$("[data-g]", bx).forEach((b) => b.onclick = () => { FR.glass = b.dataset.g; keepScroll(); });
+      $("#frc").oninput = (e) => { FR.caption = e.target.value; $("#frp").innerHTML = frPreview(d); frBindDrag(); };
+    } else {
+      const c = FR.contact;
+      bx.innerHTML = `<form id="frf2"><label for="c-n">Your name</label><input id="c-n" required autocomplete="name" value="${esc(c.name)}"><label for="c-p">Mobile number (WhatsApp)</label><input id="c-p" inputmode="tel" required autocomplete="tel" placeholder="10-digit number" value="${esc(c.phone)}">
+        <label for="c-e">Email (optional)</label><input id="c-e" type="email" autocomplete="email" value="${esc(c.email)}">
+        <label style="margin-top:16px">How do you want to receive it?</label><div class="pick"><button type="button" class="opt${FR.delivery === "courier" ? " on" : ""}" data-dl="courier"><span><b>Courier to my address</b><small>We confirm the delivery charge with the price</small></span></button>
+        <button type="button" class="opt${FR.delivery === "pickup" ? " on" : ""}" data-dl="pickup"><span><b>Pick up at a studio</b><small>Chennai, Salem or Tirunelveli</small></span></button></div>
+        ${FR.delivery === "courier" ? `<label for="c-a">Delivery address with pincode</label><textarea id="c-a" required>${esc(c.address)}</textarea>` : `<label for="c-s">Studio</label><select id="c-s">${STUDIOS.map((s) => `<option${s.name === FR.studio ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>`}
+        <div class="hp" aria-hidden="true"><label>Website<input id="c-w" tabindex="-1" autocomplete="off"></label></div><pre class="fr-sum">${esc(frSummaryText(d))}</pre><div id="frm"></div></form>`;
+      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="send">Send my frame request</button>`;
+      $("#frf2").oninput = () => { saveC(); const u = $(".fr-sum"); if (u) u.textContent = frSummaryText(d); };
+      $$("[data-dl]", bx).forEach((b) => b.onclick = () => { saveC(); FR.delivery = b.dataset.dl; render(); });
+      const saveC = () => { c.name = $("#c-n").value; c.phone = $("#c-p").value; c.email = $("#c-e").value; if ($("#c-a")) c.address = $("#c-a").value; if ($("#c-s")) FR.studio = $("#c-s").value; };
+      $("#send").onclick = async () => { const f = $("#frf2"); saveC(); if (!f.reportValidity()) return; const b = $("#send"); b.disabled = true; b.textContent = "Sending…"; $("#frm").innerHTML = "";
+        try {
+          const blob = await frBlob(), fd = new FormData(); fd.append("photo", blob, "photo.jpg");
+          const m = d.models.find((x) => x.id === FR.model), mt = d.mounts.find((x) => x.id === FR.mount), g = d.glass.find((x) => x.id === FR.glass);
+          const meta = { name: c.name, phone: c.phone, email: c.email, model: m.name, size: frLabel(frSize(d)), orientation: FR.land ? "landscape" : "portrait", mount: mt.name, glass: g.name, caption: FR.caption.trim(),
+            delivery: FR.delivery, address: FR.delivery === "courier" ? c.address : "", studio: FR.delivery === "pickup" ? FR.studio : "", zoom: FR.zoom, x: Math.round(FR.x * 10) / 10, y: Math.round(FR.y * 10) / 10, website: $("#c-w").value };
+          Object.entries(meta).forEach(([k, v]) => fd.append(k, String(v)));
+          let r; try { r = await fetch(FRAME_API(), { method: "POST", body: fd }); } catch { throw new Error("net"); }
+          const j = await r.json().catch(() => ({})); if (!r.ok || j.ok === false) throw new Error(j.error || "srv");
+          FR.done = { ref: j.ref }; render(); window.scrollTo({ top: 0 });
+        } catch (e) {
+          const wa = `https://wa.me/91${C.PHONE_1}?text=${encodeURIComponent("Hi Lifeimpressions, I would like a custom frame.\n" + frSummaryText(d) + "\nName: " + c.name + "\nPhone: " + c.phone + "\n(I will send my photo here.)")}`;
+          $("#frm").innerHTML = `<div class="note bad">${esc(e.message === "net" || e.message === "srv" ? "We could not send your request just now." : e.message)} You can send it on WhatsApp instead and attach your photo there.</div><p style="margin-top:10px"><a class="btn primary" target="_blank" rel="noopener" href="${wa}">Send on WhatsApp</a></p>`; b.disabled = false; b.textContent = "Send my frame request"; } };
+    }
+    if ($("#b")) $("#b").onclick = () => { FR.step--; render(); window.scrollTo({ top: 0 }); };
+    if ($("#n") ) $("#n").onclick = () => { FR.step++; render(); window.scrollTo({ top: 0 }); };
+    const z = $("#frz"); if (z) z.oninput = () => { frSetZoom(+z.value); $("#frnote").innerHTML = frDpiNote(d); };
+    frBindDrag();
+  };
+  const keepScroll = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
+  render();
+};
+
 // ---------- router ----------
-const TITLES = { home: "Lifeimpressions | Baby hand & foot casting", services: "Services & prices", book: "Book a session", gallery: "Gallery", locations: "Our studios", shop: "Shop", franchise: "Franchise", contact: "Contact us", faq: "FAQ", manage: "Your booking" };
+const TITLES = { home: "Lifeimpressions | Baby hand & foot casting", services: "Services & prices", frame: "Customize my frame", book: "Book a session", gallery: "Gallery", locations: "Our studios", shop: "Shop", franchise: "Franchise", contact: "Contact us", faq: "FAQ", manage: "Your booking" };
 async function route() {
   const raw = location.hash.replace(/^#/, "") || "/", [path, qs] = raw.split("?"), q = new URLSearchParams(qs || ""), seg = path.split("/").filter(Boolean);
   const key = seg[0] || "home"; $("#wa").style.display = (key === "book" || key === "manage") ? "none" : ""; $("#nav").classList.remove("open"); $("#burger").setAttribute("aria-expanded", "false");
