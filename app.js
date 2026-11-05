@@ -436,26 +436,42 @@ pages.manage = async (q, token) => {
 
 // ---------- Customize my frame ----------
 let FRAMEDATA = null;
-const loadFrameData = async () => { if (FRAMEDATA) return FRAMEDATA; try { FRAMEDATA = await (await fetch("frames.json", { cache: "no-cache" })).json(); } catch { FRAMEDATA = { models: [], sizes: [], mounts: [], glass: [] }; } return FRAMEDATA; };
+const loadFrameData = async () => { if (FRAMEDATA) return FRAMEDATA; try { FRAMEDATA = await (await fetch("frames.json", { cache: "no-cache" })).json(); } catch { FRAMEDATA = { models: [], sizes: [], boards: [], glass: [] }; } return FRAMEDATA; };
 const FRAME_API = () => String(C.API).replace(/\/site-api\/?$/, "/frame-enquiry");
-const FR = { step: 1, img: null, model: null, size: null, land: false, mount: null, glass: null, caption: "", zoom: 1, x: 0, y: 0, delivery: "courier", studio: "Chennai", contact: { name: "", phone: "", email: "", address: "" }, done: null };
-const FR_STEPS = ["Photo", "Frame", "Details", "Send"];
+const FR = { step: 1, img: null, model: null, size: null, board: null, glass: null, zoom: 1, x: 0, y: 0, name: "", dob: "", tob: "", weight: "", height: "", delivery: "courier", studio: "Chennai", contact: { name: "", phone: "", email: "", address: "" }, done: null };
+const FR_STEPS = ["Photo", "Frame", "Details", "Size & finish", "Send"];
 const frSize = (d) => d.sizes.find((s) => s.id === FR.size) || d.sizes[0];
-const frLabel = (s) => s ? `${s.w} x ${s.h} in` : "";
+const frDate = (v, long) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? `${m[3]}.${m[2]}.${long ? m[1] : m[1].slice(2)}` : ""; };
+const frTime = (v) => { const m = /^(\d{2}):(\d{2})$/.exec(v || ""); if (!m) return ""; let h = +m[1]; const ap = h >= 12 ? "PM" : "AM"; h = h % 12 || 12; return `${h}:${m[2]} ${ap}`; };
+// gold keepsake charms for the shadowbox: shape + the customer's text
+const frCharm = (kind, text, ghost) => { const t = (x, y, size, max) => `<text x="${x}" y="${y}" text-anchor="middle" font-size="${size}" font-weight="700" fill="#5a4310" font-family="Instrument Sans,Arial,sans-serif" textLength="${Math.min(max, Math.max(8, text.length * size * 0.62))}" lengthAdjust="spacingAndGlyphs">${esc(text)}</text>`;
+  const shape = { dob: `<path d="M20 6 Q32 17 44 6 L59 13 L53 31 L45 28 L45 57 L19 57 L19 28 L11 31 L5 13 Z"/>${t(32, 44, 9.4, 25)}`,
+    weight: `<path d="M8 34 A24 24 0 0 1 50 20 L50 34 Z"/><path d="M6 36 H56 Q56 50 40 50 H22 Q6 50 6 36 Z"/><circle cx="21" cy="56" r="5"/><circle cx="43" cy="56" r="5"/><path d="M50 22 L58 14" stroke="#b88a2b" stroke-width="3" fill="none"/><rect x="14" y="38" width="36" height="11" rx="3" fill="#f3dc92"/>${t(32, 46.5, 8.2, 33)}`,
+    time: `<circle cx="32" cy="36" r="23"/><circle cx="15" cy="12" r="7"/><circle cx="49" cy="12" r="7"/><circle cx="32" cy="36" r="18" fill="#f3dc92"/>${t(32, 39.5, 9.6, 31)}`,
+    height: `<rect x="3" y="20" width="58" height="26" rx="4"/><path d="M10 20 v8 M18 20 v5 M26 20 v8 M34 20 v5 M42 20 v8 M50 20 v5" stroke="#8a6416" stroke-width="1.6"/><rect x="8" y="30" width="48" height="12" rx="3" fill="#f3dc92"/>${t(32, 39.4, 9, 44)}` }[kind];
+  return `<svg class="sb-charm${ghost ? " ghost" : ""}" viewBox="0 0 64 64" aria-hidden="true"><g fill="url(#sbGold)" stroke="#a97c22" stroke-width="1">${shape}</g></svg>`; };
 function frPreview(d) {
-  const m = d.models.find((x) => x.id === FR.model) || d.models[0], mt = d.mounts.find((x) => x.id === FR.mount) || d.mounts[0], s = frSize(d);
-  const w = FR.land ? s.h : s.w, h = FR.land ? s.w : s.h, mat = mt && mt.color ? Math.round(1.25 / w * 1000) / 10 : 0;
-  const cap = FR.caption.trim();
-  return `<div class="fr-stage"><div class="fr-frame" id="frf" style="aspect-ratio:${w}/${h};--fw:${m ? m.width : 5}px;--fc:${m ? m.color : "#222"};--fe:${m ? m.edge : "#444"}">
-    <div class="fr-mat" style="${mt && mt.color ? `background:${mt.color};padding:${mat}%` : "padding:0"}">
-      <div class="fr-win" id="frw">${FR.img ? `<img id="fri" src="${FR.img.url}" alt="Your photo in the frame" draggable="false" style="transform:translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})">` : `<div class="fr-empty">Your photo appears here</div>`}</div>
-      ${cap ? `<div class="fr-cap" style="${mt && mt.id === "black" ? "color:#eee" : ""}">${esc(cap)}</div>` : ""}</div></div></div>
-    <p class="hint fr-size">${frLabel(s)}${FR.land ? ", landscape" : ", portrait"}</p>`;
+  const m = d.models.find((x) => x.id === FR.model) || d.models[0], bd = d.boards.find((x) => x.id === FR.board) || d.boards[0], g = d.glass.find((x) => x.id === FR.glass) || d.glass[0], s = frSize(d);
+  const nm = FR.name.trim(), dob = frDate(FR.dob), tob = frTime(FR.tob), wt = FR.weight.trim(), ht = FR.height.trim();
+  return `<div class="sb" id="sb" style="--ar:${s.w / s.h};aspect-ratio:${s.w}/${s.h};--fw:${m.width};--fc:${m.color};--fe:${m.edge};--bd:${bd.color};--sheen:${g.id === "anti-glare" ? 0.06 : g.id === "acrylic" ? 0.12 : 0.2}">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="sbGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e08e"/><stop offset=".45" stop-color="#d9a93a"/><stop offset="1" stop-color="#a97c22"/></linearGradient></defs></svg>
+    <div class="sb-tilt"><div class="sb-frame"><div class="sb-liner"><div class="sb-board${bd.id === "black" ? " dark" : ""}">
+      <div class="sb-photo" id="frw">${FR.img ? `<img id="fri" src="${FR.img.url}" alt="Your photo" draggable="false" style="transform:translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})">` : `<div class="fr-empty">Your photo</div>`}</div>
+      <div class="sb-name${nm ? "" : " ghost"}">${esc(nm || "Your name")}</div>
+      <div class="sb-casts"><img src="assets/casts.png" alt="Gold hand and foot casts" draggable="false"></div>
+      <div class="sb-charms">${frCharm("dob", dob || "DD.MM.YY", !dob)}${frCharm("weight", wt || "0.0 Kg", !wt)}${frCharm("time", tob || "0:00 PM", !tob)}${frCharm("height", ht || "00 cm", !ht)}</div>
+    </div></div><div class="sb-glass"></div></div></div></div>`;
 }
-function frDpiNote(d) {
-  if (!FR.img) return ""; const s = frSize(d), longIn = Math.max(s.w, s.h), longPx = Math.max(FR.img.w, FR.img.h) / FR.zoom, dpi = longPx / longIn;
-  return dpi < 130 ? `<div class="note" style="margin-top:12px">This photo is small for ${frLabel(s)}, so it may print a little soft. Send it anyway and we will tell you if a larger copy is needed.</div>` : "";
+function frTilt() {
+  const sb = $("#sb"); if (!sb) return; let active = false, t0 = performance.now(); const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const set = (x, y) => { sb.style.setProperty("--rx", x.toFixed(3)); sb.style.setProperty("--ry", y.toFixed(3)); };
+  sb.onpointermove = (e) => { active = true; const r = sb.getBoundingClientRect(); set(((e.clientY - r.top) / r.height - 0.5) * 2, ((e.clientX - r.left) / r.width - 0.5) * 2); };
+  sb.onpointerleave = sb.onpointercancel = () => { active = false; t0 = performance.now(); };
+  set(0, 0); if (calm) return;
+  const loop = (t) => { if (!sb.isConnected) return; if (!active) { const k = (t - t0) / 1500; set(0.12 * Math.sin(k * 0.7), 0.55 * Math.sin(k)); } requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
 }
+const frDpiNote = () => FR.img && Math.min(FR.img.w, FR.img.h) < 600 ? `<div class="note" style="margin-top:12px">This photo is small, so it may print a little soft. Send it anyway and we will tell you if a larger copy is needed.</div>` : "";
 function frBindDrag() {
   const w = $("#frw"); if (!w || !FR.img) return; let st = null;
   w.onpointerdown = (e) => { st = { px: e.clientX, py: e.clientY, x: FR.x, y: FR.y }; w.setPointerCapture(e.pointerId); w.classList.add("drag"); };
@@ -482,52 +498,54 @@ async function frBlob() {   // sends a copy up to 3000 px on the long side, JPEG
   }
   throw new Error("This photo is too large to send. Please choose a smaller one.");
 }
-function frSummaryText(d) {
-  const m = d.models.find((x) => x.id === FR.model), mt = d.mounts.find((x) => x.id === FR.mount), g = d.glass.find((x) => x.id === FR.glass);
-  return `Frame: ${m ? m.name : "-"}\nSize: ${frLabel(frSize(d))} (${FR.land ? "landscape" : "portrait"})\nMount: ${mt ? mt.name : "-"}\nGlass: ${g ? g.name : "-"}\nCaption: ${FR.caption.trim() || "none"}\nDelivery: ${FR.delivery === "courier" ? "Courier to " + FR.contact.address : "Pick up at " + FR.studio + " studio"}`;
-}
+const frDetails = (d) => { const m = d.models.find((x) => x.id === FR.model), bd = d.boards.find((x) => x.id === FR.board), g = d.glass.find((x) => x.id === FR.glass), s = frSize(d);
+  return [`Frame: ${m ? m.name : "-"}`, `Size: ${s.label}`, `Board colour: ${bd ? bd.name : "-"}`, `Glass: ${g ? g.name : "-"}`, `Name on frame: ${FR.name.trim() || "none"}`,
+    `Date of birth: ${frDate(FR.dob, true) || "none"}`, `Time of birth: ${frTime(FR.tob) || "none"}`, `Weight: ${FR.weight.trim() || "none"}`, `Height: ${FR.height.trim() || "none"}`].join("\n"); };
+const frSummaryText = (d) => frDetails(d) + `\nDelivery: ${FR.delivery === "courier" ? "Courier to " + FR.contact.address : "Pick up at " + FR.studio + " studio"}`;
 pages.frame = async () => {
   main.innerHTML = loading(); const d = await loadFrameData();
   if (!d.models.length) { main.innerHTML = failBox("This page could not load. Please try again."); return; }
-  if (!FR.model) { FR.model = d.models[0].id; FR.size = d.sizes[0].id; FR.mount = d.mounts[1] ? d.mounts[1].id : d.mounts[0].id; FR.glass = d.glass[0].id; }
+  if (!FR.model) { FR.model = d.models[0].id; FR.size = d.sizes[0].id; FR.board = d.boards[0].id; FR.glass = d.glass[0].id; }
   const render = () => {
-    if (FR.done) { const w = STUDIOS.find((s) => s.name === FR.studio) || STUDIOS[0];
+    if (FR.done) {
       main.innerHTML = `<div class="wrap" style="padding:40px var(--gutter) 80px"><div class="panel" style="max-width:640px;margin:0 auto"><div class="ok-box"><div class="tick">&#10003;</div><h1 style="font-size:1.8rem">We have your frame request</h1>
         <p class="hint">Reference <b>${esc(FR.done.ref || "")}</b>. We will check your photo and message you on WhatsApp with the price and delivery time. You pay nothing now.</p></div>
         <pre class="fr-sum">${esc(frSummaryText(d))}</pre><p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#/">Back to home</a><button class="btn ghost" id="again">Design another frame</button></p></div></div>`;
-      $("#again").onclick = () => { Object.assign(FR, { step: 1, img: null, caption: "", zoom: 1, x: 0, y: 0, done: null }); render(); }; return; }
-    const lead = { 1: "Upload your photo", 2: "Choose a frame", 3: "Size, mount and glass", 4: "Where should we send it?" }[FR.step];
-    const ok1 = !!FR.img;
+      $("#again").onclick = () => { Object.assign(FR, { step: 1, img: null, name: "", dob: "", tob: "", weight: "", height: "", zoom: 1, x: 0, y: 0, done: null }); render(); }; return; }
+    const lead = { 1: "Upload your photo", 2: "Choose a frame", 3: "Details for the frame", 4: "Size and finish", 5: "Where should we send it?" }[FR.step];
     main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Customize my frame</h1>
       <ol class="wiz" aria-label="Steps">${FR_STEPS.map((s, i) => `<li class="${FR.step === i + 1 ? "on" : FR.step > i + 1 ? "done" : ""}"${FR.step === i + 1 ? ' aria-current="step"' : ""}><i>${FR.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
       <p class="wiz-count">Step ${FR.step} of ${FR_STEPS.length}: <b>${FR_STEPS[FR.step - 1]}</b></p>
-      <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div id="frp">${frPreview(d)}</div></div></div>
-      <div class="fr-ctl"><div class="panel" id="frbox"><h2 style="font-size:1.5rem;margin-bottom:14px">${lead}</h2>${FR.img && FR.step <= 3 ? `<div class="fr-zoom"><label for="frz">Zoom <small class="hint">(drag the photo to reposition)</small></label><input id="frz" type="range" min="1" max="3" step="0.02" value="${FR.zoom}"><div id="frnote">${frDpiNote(d)}</div></div>` : ""}<div id="frstep"></div></div></div></div></div>
+      <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div id="frp">${frPreview(d)}</div><p class="hint fr-size">Your 3D shadowbox preview. Move over it to see the depth.</p></div></div>
+      <div class="fr-ctl"><div class="panel" id="frbox"><h2 style="font-size:1.5rem;margin-bottom:14px">${lead}</h2>${FR.img && FR.step <= 4 ? `<div class="fr-zoom"><label for="frz">Photo zoom <small class="hint">(drag the photo to reposition)</small></label><input id="frz" type="range" min="1" max="3" step="0.02" value="${FR.zoom}"><div id="frnote">${frDpiNote()}</div></div>` : ""}<div id="frstep"></div></div></div></div></div>
       <div class="wnav" role="region" aria-label="Frame actions"><div class="wnav-in"><div class="wnav-info"><span>No payment now</span><small>We reply with the price</small></div><div class="wnav-btns" id="frbtn"></div></div></div></div>`;
-    const bx = $("#frstep"), btn = $("#frbtn");
+    const bx = $("#frstep"), btn = $("#frbtn"), refreshPrev = () => { $("#frp").innerHTML = frPreview(d); frBindDrag(); frTilt(); };
+    const keepScroll = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
+    const bind = (id, key) => { const el = $(id); if (el) el.oninput = () => { FR[key] = el.value; refreshPrev(); }; };
     if (FR.step === 1) {
       bx.innerHTML = `<label class="fr-drop" for="frfile"><input id="frfile" type="file" accept="image/*" hidden><b>${FR.img ? "Change photo" : "Choose a photo"}</b><span>JPG, PNG or WebP. A sharp, high-resolution photo prints best.</span></label><div id="fre"></div>
-        <p class="hint" style="margin-top:12px">Your photo is used only to make your frame.</p>`;
-      btn.innerHTML = `<button class="btn primary" id="n1" ${ok1 ? "" : "disabled"}>Choose frame</button>`;
-      const take = async (f) => { try { const i = await frUpload(f); FR.img = i; FR.zoom = 1; FR.x = FR.y = 0; FR.land = i.w > i.h; render(); } catch (e) { $("#fre").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; } };
-      const fi = $("#frfile"); $(".fr-drop").ondragover = (e) => e.preventDefault(); $(".fr-drop").ondrop = (e) => { e.preventDefault(); take(e.dataTransfer.files[0]); };
-      fi.onchange = () => take(fi.files[0]);
-
+        <p class="hint" style="margin-top:12px">The gold hand and foot castings are already placed in your frame. Your photo is used only to make your frame.</p>`;
+      btn.innerHTML = `<button class="btn primary" id="n1" ${FR.img ? "" : "disabled"}>Choose frame</button>`;
+      const take = async (f) => { try { const i = await frUpload(f); FR.img = i; FR.zoom = 1; FR.x = FR.y = 0; render(); } catch (e) { $("#fre").innerHTML = `<div class="note bad">${esc(e.message)}</div>`; } };
+      const fi = $("#frfile"); $(".fr-drop").ondragover = (e) => e.preventDefault(); $(".fr-drop").ondrop = (e) => { e.preventDefault(); take(e.dataTransfer.files[0]); }; fi.onchange = () => take(fi.files[0]);
       if ($("#n1")) $("#n1").onclick = () => { FR.step = 2; render(); window.scrollTo({ top: 0 }); };
     } else if (FR.step === 2) {
       bx.innerHTML = `<div class="fr-models">${d.models.map((m) => `<button type="button" class="fr-m${FR.model === m.id ? " on" : ""}" data-id="${esc(m.id)}" aria-pressed="${FR.model === m.id}"><span class="fr-sw" style="background:${m.color};border-color:${m.edge}"></span><b>${esc(m.name)}</b><small>${esc(m.note || "")}</small></button>`).join("")}</div>`;
-      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Size &amp; details</button>`;
-      $$(".fr-m", bx).forEach((b) => b.onclick = () => { FR.model = b.dataset.id; keepScroll(); });
+      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Add details</button>`;
+      $$(".fr-m", bx).forEach((b) => b.onclick = () => { FR.model = b.dataset.id; $$(".fr-m", bx).forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); refreshPrev(); });
     } else if (FR.step === 3) {
-      bx.innerHTML = `<label>Size</label><div class="chips" id="szs">${d.sizes.map((s) => `<button type="button" class="chip${FR.size === s.id ? " on" : ""}" data-id="${esc(s.id)}">${frLabel(s)}</button>`).join("")}</div>
-        <label style="margin-top:16px">Orientation</label><div class="chips"><button type="button" class="chip${FR.land ? "" : " on"}" data-o="p">Portrait</button><button type="button" class="chip${FR.land ? " on" : ""}" data-o="l">Landscape</button></div>
-        <label style="margin-top:16px">Mount (border around the photo)</label><div class="chips">${d.mounts.map((m) => `<button type="button" class="chip${FR.mount === m.id ? " on" : ""}" data-m="${esc(m.id)}">${m.color ? `<i class="fr-dot" style="background:${m.color}"></i>` : ""}${esc(m.name)}</button>`).join("")}</div>
-        <label style="margin-top:16px">Glass</label><div class="pick">${d.glass.map((g) => `<button type="button" class="opt${FR.glass === g.id ? " on" : ""}" data-g="${esc(g.id)}"><span><b>${esc(g.name)}</b><small>${esc(g.note || "")}</small></span></button>`).join("")}</div>
-        <label for="frc" style="margin-top:16px">Caption (optional)</label><input id="frc" maxlength="60" value="${esc(FR.caption)}" placeholder="For example: Aarav, 12 Oct 2026"><p class="hint" style="margin:6px 0 0">Printed below the photo, up to 60 characters.</p>`;
+      bx.innerHTML = `<p class="hint" style="margin:0 0 12px">The gold hand and foot castings are included. Leave blank anything you do not want on the frame.</p>
+        <label for="f-name">Name</label><input id="f-name" maxlength="24" value="${esc(FR.name)}" placeholder="For example: Kayalvizhi" autocomplete="off">
+        <div class="two-up"><div><label for="f-dob">Date of birth</label><input id="f-dob" type="date" value="${esc(FR.dob)}"></div><div><label for="f-tob">Time of birth</label><input id="f-tob" type="time" value="${esc(FR.tob)}"></div></div>
+        <div class="two-up"><div><label for="f-wt">Weight</label><input id="f-wt" maxlength="10" value="${esc(FR.weight)}" placeholder="2.4 Kg" autocomplete="off"></div><div><label for="f-ht">Height</label><input id="f-ht" maxlength="8" value="${esc(FR.height)}" placeholder="50 cm" autocomplete="off"></div></div>`;
+      btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Size &amp; finish</button>`;
+      bind("#f-name", "name"); bind("#f-dob", "dob"); bind("#f-tob", "tob"); bind("#f-wt", "weight"); bind("#f-ht", "height");
+    } else if (FR.step === 4) {
+      bx.innerHTML = `<label>Size</label><div class="chips">${d.sizes.map((s) => `<button type="button" class="chip${FR.size === s.id ? " on" : ""}" data-id="${esc(s.id)}">${esc(s.label)}</button>`).join("")}</div>
+        <label style="margin-top:16px">Board colour</label><div class="chips">${d.boards.map((m) => `<button type="button" class="chip${FR.board === m.id ? " on" : ""}" data-m="${esc(m.id)}"><i class="fr-dot" style="background:${m.color}"></i>${esc(m.name)}</button>`).join("")}</div>
+        <label style="margin-top:16px">Glass</label><div class="pick">${d.glass.map((g) => `<button type="button" class="opt${FR.glass === g.id ? " on" : ""}" data-g="${esc(g.id)}"><span><b>${esc(g.name)}</b><small>${esc(g.note || "")}</small></span></button>`).join("")}</div>`;
       btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Continue</button>`;
-      $$("[data-id]", bx).forEach((b) => b.onclick = () => { FR.size = b.dataset.id; keepScroll(); }); $$("[data-o]", bx).forEach((b) => b.onclick = () => { FR.land = b.dataset.o === "l"; keepScroll(); });
-      $$("[data-m]", bx).forEach((b) => b.onclick = () => { FR.mount = b.dataset.m; keepScroll(); }); $$("[data-g]", bx).forEach((b) => b.onclick = () => { FR.glass = b.dataset.g; keepScroll(); });
-      $("#frc").oninput = (e) => { FR.caption = e.target.value; $("#frp").innerHTML = frPreview(d); frBindDrag(); };
+      $$("[data-id]", bx).forEach((b) => b.onclick = () => { FR.size = b.dataset.id; keepScroll(); }); $$("[data-m]", bx).forEach((b) => b.onclick = () => { FR.board = b.dataset.m; keepScroll(); }); $$("[data-g]", bx).forEach((b) => b.onclick = () => { FR.glass = b.dataset.g; keepScroll(); });
     } else {
       const c = FR.contact;
       bx.innerHTML = `<form id="frf2"><label for="c-n">Your name</label><input id="c-n" required autocomplete="name" value="${esc(c.name)}"><label for="c-p">Mobile number (WhatsApp)</label><input id="c-p" inputmode="tel" required autocomplete="tel" placeholder="10-digit number" value="${esc(c.phone)}">
@@ -537,14 +555,14 @@ pages.frame = async () => {
         ${FR.delivery === "courier" ? `<label for="c-a">Delivery address with pincode</label><textarea id="c-a" required>${esc(c.address)}</textarea>` : `<label for="c-s">Studio</label><select id="c-s">${STUDIOS.map((s) => `<option${s.name === FR.studio ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>`}
         <div class="hp" aria-hidden="true"><label>Website<input id="c-w" tabindex="-1" autocomplete="off"></label></div><pre class="fr-sum">${esc(frSummaryText(d))}</pre><div id="frm"></div></form>`;
       btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="send">Send my frame request</button>`;
+      const saveC = () => { c.name = $("#c-n").value; c.phone = $("#c-p").value; c.email = $("#c-e").value; if ($("#c-a")) c.address = $("#c-a").value; if ($("#c-s")) FR.studio = $("#c-s").value; };
       $("#frf2").oninput = () => { saveC(); const u = $(".fr-sum"); if (u) u.textContent = frSummaryText(d); };
       $$("[data-dl]", bx).forEach((b) => b.onclick = () => { saveC(); FR.delivery = b.dataset.dl; render(); });
-      const saveC = () => { c.name = $("#c-n").value; c.phone = $("#c-p").value; c.email = $("#c-e").value; if ($("#c-a")) c.address = $("#c-a").value; if ($("#c-s")) FR.studio = $("#c-s").value; };
       $("#send").onclick = async () => { const f = $("#frf2"); saveC(); if (!f.reportValidity()) return; const b = $("#send"); b.disabled = true; b.textContent = "Sending…"; $("#frm").innerHTML = "";
         try {
           const blob = await frBlob(), fd = new FormData(); fd.append("photo", blob, "photo.jpg");
-          const m = d.models.find((x) => x.id === FR.model), mt = d.mounts.find((x) => x.id === FR.mount), g = d.glass.find((x) => x.id === FR.glass);
-          const meta = { name: c.name, phone: c.phone, email: c.email, model: m.name, size: frLabel(frSize(d)), orientation: FR.land ? "landscape" : "portrait", mount: mt.name, glass: g.name, caption: FR.caption.trim(),
+          const m = d.models.find((x) => x.id === FR.model), bd = d.boards.find((x) => x.id === FR.board), g = d.glass.find((x) => x.id === FR.glass);
+          const meta = { name: c.name, phone: c.phone, email: c.email, details: frDetails(d), model: m.name, size: frSize(d).label, orientation: "landscape", mount: bd.name, glass: g.name, caption: FR.name.trim(),
             delivery: FR.delivery, address: FR.delivery === "courier" ? c.address : "", studio: FR.delivery === "pickup" ? FR.studio : "", zoom: FR.zoom, x: Math.round(FR.x * 10) / 10, y: Math.round(FR.y * 10) / 10, website: $("#c-w").value };
           Object.entries(meta).forEach(([k, v]) => fd.append(k, String(v)));
           let r; try { r = await fetch(FRAME_API(), { method: "POST", body: fd }); } catch { throw new Error("net"); }
@@ -555,11 +573,10 @@ pages.frame = async () => {
           $("#frm").innerHTML = `<div class="note bad">${esc(e.message === "net" || e.message === "srv" ? "We could not send your request just now." : e.message)} You can send it on WhatsApp instead and attach your photo there.</div><p style="margin-top:10px"><a class="btn primary" target="_blank" rel="noopener" href="${wa}">Send on WhatsApp</a></p>`; b.disabled = false; b.textContent = "Send my frame request"; } };
     }
     if ($("#b")) $("#b").onclick = () => { FR.step--; render(); window.scrollTo({ top: 0 }); };
-    if ($("#n") ) $("#n").onclick = () => { FR.step++; render(); window.scrollTo({ top: 0 }); };
-    const z = $("#frz"); if (z) z.oninput = () => { frSetZoom(+z.value); $("#frnote").innerHTML = frDpiNote(d); };
-    frBindDrag();
+    if ($("#n")) $("#n").onclick = () => { FR.step++; render(); window.scrollTo({ top: 0 }); };
+    const z = $("#frz"); if (z) z.oninput = () => frSetZoom(+z.value);
+    frBindDrag(); frTilt();
   };
-  const keepScroll = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
   render();
 };
 
