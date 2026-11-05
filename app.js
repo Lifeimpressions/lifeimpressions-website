@@ -438,7 +438,7 @@ pages.manage = async (q, token) => {
 let FRAMEDATA = null;
 const loadFrameData = async () => { if (FRAMEDATA) return FRAMEDATA; try { FRAMEDATA = await (await fetch("frames.json", { cache: "no-cache" })).json(); } catch { FRAMEDATA = { models: [], sizes: [], boards: [], glass: [] }; } return FRAMEDATA; };
 const FRAME_API = () => String(C.API).replace(/\/site-api\/?$/, "/frame-enquiry");
-const FR = { step: 1, img: null, model: null, size: null, board: null, glass: null, zoom: 1, x: 0, y: 0, name: "", dob: "", tob: "", weight: "", height: "", delivery: "courier", studio: "Chennai", contact: { name: "", phone: "", email: "", address: "" }, done: null };
+const FR = { view: "front", wall: { bg: "#ebe4d8", own: null, x: 50, y: 42, scale: 34 }, step: 1, img: null, model: null, size: null, board: null, glass: null, zoom: 1, x: 0, y: 0, name: "", dob: "", tob: "", weight: "", height: "", delivery: "courier", studio: "Chennai", contact: { name: "", phone: "", email: "", address: "" }, done: null };
 const FR_STEPS = ["Photo", "Frame", "Details", "Size & finish", "Send"];
 const frSize = (d) => d.sizes.find((s) => s.id === FR.size) || d.sizes[0];
 const frDate = (v, long) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ""); return m ? `${m[3]}.${m[2]}.${long ? m[1] : m[1].slice(2)}` : ""; };
@@ -450,17 +450,53 @@ const frCharm = (kind, text, ghost) => { const t = (x, y, size, max) => `<text x
     time: `<circle cx="32" cy="36" r="23"/><circle cx="15" cy="12" r="7"/><circle cx="49" cy="12" r="7"/><circle cx="32" cy="36" r="18" fill="#f3dc92"/>${t(32, 39.5, 9.6, 31)}`,
     height: `<rect x="3" y="20" width="58" height="26" rx="4"/><path d="M10 20 v8 M18 20 v5 M26 20 v8 M34 20 v5 M42 20 v8 M50 20 v5" stroke="#8a6416" stroke-width="1.6"/><rect x="8" y="30" width="48" height="12" rx="3" fill="#f3dc92"/>${t(32, 39.4, 9, 44)}` }[kind];
   return `<svg class="sb-charm${ghost ? " ghost" : ""}" viewBox="0 0 64 64" aria-hidden="true"><g fill="url(#sbGold)" stroke="#a97c22" stroke-width="1">${shape}</g></svg>`; };
-function frPreview(d) {
-  const m = d.models.find((x) => x.id === FR.model) || d.models[0], bd = d.boards.find((x) => x.id === FR.board) || d.boards[0], g = d.glass.find((x) => x.id === FR.glass) || d.glass[0], s = frSize(d);
-  const nm = FR.name.trim(), dob = frDate(FR.dob), tob = frTime(FR.tob), wt = FR.weight.trim(), ht = FR.height.trim();
-  return `<div class="sb" id="sb" style="--ar:${s.w / s.h};aspect-ratio:${s.w}/${s.h};--fw:${m.width};--fc:${m.color};--fe:${m.edge};--bd:${bd.color};--sheen:${g.id === "anti-glare" ? 0.06 : g.id === "acrylic" ? 0.12 : 0.2}">
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="sbGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e08e"/><stop offset=".45" stop-color="#d9a93a"/><stop offset="1" stop-color="#a97c22"/></linearGradient></defs></svg>
-    <div class="sb-tilt"><div class="sb-frame"><div class="sb-liner"><div class="sb-board${bd.id === "black" ? " dark" : ""}">
-      <div class="sb-photo" id="frw">${FR.img ? `<img id="fri" src="${FR.img.url}" alt="Your photo" draggable="false" style="transform:translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})">` : `<div class="fr-empty">Your photo</div>`}</div>
+const frLayout = (s) => { const r = s.w / s.h; return r >= 1.6 ? "wide" : r < 1.1 ? "sq" : ""; };
+// the shared inside of the frame: printed photo + name, the gold castings and the four charms
+function frBoard(d, edit) {
+  const bd = d.boards.find((x) => x.id === FR.board) || d.boards[0], s = frSize(d), nm = FR.name.trim(), dob = frDate(FR.dob), tob = frTime(FR.tob), wt = FR.weight.trim(), ht = FR.height.trim();
+  return `<div class="sb-board${bd.id === "black" ? " dark" : ""}">
+      <div class="sb-photo"${edit ? ' id="frw"' : ""}>${FR.img ? `<img${edit ? ' id="fri"' : ""} src="${FR.img.url}" alt="Your photo" draggable="false" style="transform:translate(${FR.x}%,${FR.y}%) scale(${FR.zoom})">` : `<div class="fr-empty">Your photo</div>`}</div>
       <div class="sb-name${nm ? "" : " ghost"}">${esc(nm || "Your name")}</div>
-      <div class="sb-casts"><img src="assets/casts.png" alt="Gold hand and foot casts" draggable="false"></div>
-      <div class="sb-charms">${frCharm("dob", dob || "DD.MM.YY", !dob)}${frCharm("weight", wt || "0.0 Kg", !wt)}${frCharm("time", tob || "0:00 PM", !tob)}${frCharm("height", ht || "00 cm", !ht)}</div>
-    </div></div><div class="sb-glass"></div></div></div></div>`;
+      <div class="sb-casts"><img src="assets/${frLayout(s) === "wide" ? "casts-row" : "casts-grid"}.png" alt="Gold hand and foot casts" draggable="false"></div>
+      <div class="sb-charms">${frCharm("dob", dob || "DD.MM.YY", !dob)}${frCharm("weight", wt || "0.0 Kg", !wt)}${frCharm("time", tob || "0:00 PM", !tob)}${frCharm("height", ht || "00 cm", !ht)}</div></div>`;
+}
+const frVars = (d) => { const m = d.models.find((x) => x.id === FR.model) || d.models[0], bd = d.boards.find((x) => x.id === FR.board) || d.boards[0], g = d.glass.find((x) => x.id === FR.glass) || d.glass[0], s = frSize(d);
+  return `--ar:${s.w / s.h};aspect-ratio:${s.w}/${s.h};--fw:${m.width};--fc:${m.color};--fe:${m.edge};--bd:${bd.color};--sheen:${g.id === "anti-glare" ? 0.06 : g.id === "acrylic" ? 0.12 : 0.2}`; };
+const FR_DEFS = `<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="sbGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f8e08e"/><stop offset=".45" stop-color="#d9a93a"/><stop offset="1" stop-color="#a97c22"/></linearGradient></defs></svg>`;
+function frFront(d, edit) {   // straight-on view with a little parallax
+  return `<div class="sb ${frLayout(frSize(d))}" ${edit ? 'id="sb"' : ""} data-view="front" style="${frVars(d)}">${FR_DEFS}<div class="sb-tilt"><div class="sb-frame"><div class="sb-liner">${frBoard(d, edit)}</div><div class="sb-glass"></div></div></div></div>`;
+}
+function fr3D(d) {            // real 3D box: frame sides, inner walls, recessed board, castings raised above it
+  return `<div class="sb sb3 ${frLayout(frSize(d))}" id="sb" data-view="3d" style="${frVars(d)}">${FR_DEFS}<div class="sb3d">
+    <div class="b3 sh"></div>
+    <div class="b3 o-top"></div><div class="b3 o-bot"></div><div class="b3 o-l"></div><div class="b3 o-r"></div>
+    <div class="b3 w-top"></div><div class="b3 w-bot"></div><div class="b3 w-l"></div><div class="b3 w-r"></div>
+    <div class="b3 back">${frBoard(d, false)}</div>
+    <div class="b3 ring"></div><div class="b3 glass3"></div></div></div>`;
+}
+const FR_WALLS = ["#ebe4d8", "#f4f1ec", "#d9d4c8", "#c9d3cb", "#d8dde6"];
+const FR_SOFA = `<svg class="wall-sofa" viewBox="0 0 250 100" aria-hidden="true"><rect x="22" y="6" width="206" height="52" rx="14" fill="#7d8a86"/><rect x="2" y="34" width="40" height="52" rx="12" fill="#6b7874"/><rect x="208" y="34" width="40" height="52" rx="12" fill="#6b7874"/><rect x="36" y="44" width="178" height="38" rx="10" fill="#8a9792"/><rect x="38" y="20" width="84" height="32" rx="9" fill="#97a49f"/><rect x="128" y="20" width="84" height="32" rx="9" fill="#97a49f"/><rect x="26" y="86" width="8" height="12" fill="#3d3a36"/><rect x="216" y="86" width="8" height="12" fill="#3d3a36"/></svg>`;
+function frWall(d) {
+  const s = frSize(d), w = FR.wall, own = !!w.own, widthPct = own ? w.scale : s.w / 260 * 100, leftPct = own ? w.x : 50, topPct = own ? w.y : 90 - 115 / 162.5 * 100;
+  return `<div class="wall${own ? " own" : ""}" id="wall" style="background-color:${w.bg};${own ? `background-image:url(${w.own});` : ""}">
+    ${own ? "" : `<div class="wall-skirt"></div><div class="wall-floor"></div><div class="wall-ruler"><span>1 m</span></div>${FR_SOFA}`}
+    <div class="wall-frame" id="wf" style="left:${leftPct}%;top:${topPct}%;width:${widthPct}%">${frFront(d, false)}</div></div>
+    <div class="wall-ctl">${own ? `<label for="wsc">Frame size on your wall</label><input id="wsc" type="range" min="10" max="80" value="${w.scale}"><p class="hint" style="margin:6px 0 0">Drag the frame to move it. Not to scale: match it to your wall with the slider.</p><button type="button" class="btn ghost small" id="wsample" style="margin-top:8px">Back to sample room</button>`
+      : `<div class="wall-sw" role="group" aria-label="Wall colour">${FR_WALLS.map((c) => `<button type="button" class="wsw${w.bg === c ? " on" : ""}" data-c="${c}" style="background:${c}" aria-label="Wall colour"></button>`).join("")}</div>
+        <p class="hint" style="margin:6px 0 8px">Shown to scale: this frame is ${s.w} x ${s.h} cm, and the sofa is about 1.8 m wide.</p>
+        <label class="btn ghost small" for="wfile" style="cursor:pointer">Use a photo of my own wall</label><input id="wfile" type="file" accept="image/*" hidden>`}</div>`;
+}
+function frPreview(d) { return FR.view === "3d" ? fr3D(d) : FR.view === "wall" ? frWall(d) : frFront(d, true); }
+function frBindWall(d, refresh) {
+  const w = $("#wall"); if (!w) return;
+  $$(".wsw").forEach((b) => b.onclick = () => { FR.wall.bg = b.dataset.c; refresh(); });
+  const f = $("#wfile"); if (f) f.onchange = async () => { try { const i = await frUpload(f.files[0]); FR.wall.own = i.url; FR.wall.x = 50; FR.wall.y = 42; FR.wall.scale = 34; refresh(); } catch (e) { alert(e.message); } };
+  const sc = $("#wsc"); if (sc) sc.oninput = () => { FR.wall.scale = +sc.value; $("#wf").style.width = sc.value + "%"; };
+  const sm = $("#wsample"); if (sm) sm.onclick = () => { FR.wall.own = null; refresh(); };
+  const wf = $("#wf"); if (wf && FR.wall.own) { let st = null; wf.style.cursor = "grab"; wf.style.touchAction = "none";
+    wf.onpointerdown = (e) => { st = { px: e.clientX, py: e.clientY, x: FR.wall.x, y: FR.wall.y }; wf.setPointerCapture(e.pointerId); };
+    wf.onpointermove = (e) => { if (!st) return; const r = w.getBoundingClientRect(); FR.wall.x = Math.max(0, Math.min(100, st.x + (e.clientX - st.px) / r.width * 100)); FR.wall.y = Math.max(0, Math.min(100, st.y + (e.clientY - st.py) / r.height * 100)); wf.style.left = FR.wall.x + "%"; wf.style.top = FR.wall.y + "%"; };
+    wf.onpointerup = wf.onpointercancel = () => { st = null; }; }
 }
 function frTilt() {
   const sb = $("#sb"); if (!sb) return; let active = false, t0 = performance.now(); const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -468,7 +504,7 @@ function frTilt() {
   sb.onpointermove = (e) => { active = true; const r = sb.getBoundingClientRect(); set(((e.clientY - r.top) / r.height - 0.5) * 2, ((e.clientX - r.left) / r.width - 0.5) * 2); };
   sb.onpointerleave = sb.onpointercancel = () => { active = false; t0 = performance.now(); };
   set(0, 0); if (calm) return;
-  const loop = (t) => { if (!sb.isConnected) return; if (!active) { const k = (t - t0) / 1500; set(0.12 * Math.sin(k * 0.7), 0.55 * Math.sin(k)); } requestAnimationFrame(loop); };
+  const loop = (t) => { if (!sb.isConnected) return; if (!active) { const k = (t - t0) / 1500; const big = sb.dataset.view === "3d"; set((big ? 0.3 : 0.12) * Math.sin(k * 0.7), (big ? 0.9 : 0.55) * Math.sin(k)); } requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
 }
 const frDpiNote = () => FR.img && Math.min(FR.img.w, FR.img.h) < 600 ? `<div class="note" style="margin-top:12px">This photo is small, so it may print a little soft. Send it anyway and we will tell you if a larger copy is needed.</div>` : "";
@@ -516,10 +552,10 @@ pages.frame = async () => {
     main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Customize my frame</h1>
       <ol class="wiz" aria-label="Steps">${FR_STEPS.map((s, i) => `<li class="${FR.step === i + 1 ? "on" : FR.step > i + 1 ? "done" : ""}"${FR.step === i + 1 ? ' aria-current="step"' : ""}><i>${FR.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
       <p class="wiz-count">Step ${FR.step} of ${FR_STEPS.length}: <b>${FR_STEPS[FR.step - 1]}</b></p>
-      <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div id="frp">${frPreview(d)}</div><p class="hint fr-size">Your 3D shadowbox preview. Move over it to see the depth.</p></div></div>
+      <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div class="fr-views" role="tablist" aria-label="Preview view">${[["front", "Front"], ["3d", "3D view"], ["wall", "On my wall"]].map(([k, n]) => `<button type="button" role="tab" data-v="${k}" class="${FR.view === k ? "on" : ""}" aria-selected="${FR.view === k}">${n}</button>`).join("")}</div><div id="frp">${frPreview(d)}</div><p class="hint fr-size" id="frhint"></p></div></div>
       <div class="fr-ctl"><div class="panel" id="frbox"><h2 style="font-size:1.5rem;margin-bottom:14px">${lead}</h2>${FR.img && FR.step <= 4 ? `<div class="fr-zoom"><label for="frz">Photo zoom <small class="hint">(drag the photo to reposition)</small></label><input id="frz" type="range" min="1" max="3" step="0.02" value="${FR.zoom}"><div id="frnote">${frDpiNote()}</div></div>` : ""}<div id="frstep"></div></div></div></div></div>
       <div class="wnav" role="region" aria-label="Frame actions"><div class="wnav-in"><div class="wnav-info"><span>No payment now</span><small>We reply with the price</small></div><div class="wnav-btns" id="frbtn"></div></div></div></div>`;
-    const bx = $("#frstep"), btn = $("#frbtn"), refreshPrev = () => { $("#frp").innerHTML = frPreview(d); frBindDrag(); frTilt(); };
+    const bx = $("#frstep"), btn = $("#frbtn"), refreshPrev = () => { $("#frp").innerHTML = frPreview(d); frBindDrag(); frTilt(); frBindWall(d, refreshPrev); const h = $("#frhint"); if (h) h.textContent = FR.view === "3d" ? "Move over the frame, or drag it, to turn it and see the depth." : FR.view === "front" ? "Move over the frame to see the depth. Drag the photo to reposition it." : ""; };
     const keepScroll = () => { const y = window.scrollY; render(); window.scrollTo(0, y); };
     const bind = (id, key) => { const el = $(id); if (el) el.oninput = () => { FR[key] = el.value; refreshPrev(); }; };
     if (FR.step === 1) {
@@ -541,11 +577,11 @@ pages.frame = async () => {
       btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Size &amp; finish</button>`;
       bind("#f-name", "name"); bind("#f-dob", "dob"); bind("#f-tob", "tob"); bind("#f-wt", "weight"); bind("#f-ht", "height");
     } else if (FR.step === 4) {
-      bx.innerHTML = `<label>Size</label><div class="chips">${d.sizes.map((s) => `<button type="button" class="chip${FR.size === s.id ? " on" : ""}" data-id="${esc(s.id)}">${esc(s.label)}</button>`).join("")}</div>
+      bx.innerHTML = `<label for="f-size">Size (width x height)</label><select id="f-size">${d.sizes.map((x) => `<option value="${esc(x.id)}"${FR.size === x.id ? " selected" : ""}>${esc(x.label)}</option>`).join("")}</select>
         <label style="margin-top:16px">Board colour</label><div class="chips">${d.boards.map((m) => `<button type="button" class="chip${FR.board === m.id ? " on" : ""}" data-m="${esc(m.id)}"><i class="fr-dot" style="background:${m.color}"></i>${esc(m.name)}</button>`).join("")}</div>
         <label style="margin-top:16px">Glass</label><div class="pick">${d.glass.map((g) => `<button type="button" class="opt${FR.glass === g.id ? " on" : ""}" data-g="${esc(g.id)}"><span><b>${esc(g.name)}</b><small>${esc(g.note || "")}</small></span></button>`).join("")}</div>`;
       btn.innerHTML = `<button class="btn ghost" id="b">Back</button><button class="btn primary" id="n">Continue</button>`;
-      $$("[data-id]", bx).forEach((b) => b.onclick = () => { FR.size = b.dataset.id; keepScroll(); }); $$("[data-m]", bx).forEach((b) => b.onclick = () => { FR.board = b.dataset.m; keepScroll(); }); $$("[data-g]", bx).forEach((b) => b.onclick = () => { FR.glass = b.dataset.g; keepScroll(); });
+      $("#f-size").onchange = (e) => { FR.size = e.target.value; refreshPrev(); }; $$("[data-m]", bx).forEach((b) => b.onclick = () => { FR.board = b.dataset.m; keepScroll(); }); $$("[data-g]", bx).forEach((b) => b.onclick = () => { FR.glass = b.dataset.g; keepScroll(); });
     } else {
       const c = FR.contact;
       bx.innerHTML = `<form id="frf2"><label for="c-n">Your name</label><input id="c-n" required autocomplete="name" value="${esc(c.name)}"><label for="c-p">Mobile number (WhatsApp)</label><input id="c-p" inputmode="tel" required autocomplete="tel" placeholder="10-digit number" value="${esc(c.phone)}">
@@ -562,7 +598,7 @@ pages.frame = async () => {
         try {
           const blob = await frBlob(), fd = new FormData(); fd.append("photo", blob, "photo.jpg");
           const m = d.models.find((x) => x.id === FR.model), bd = d.boards.find((x) => x.id === FR.board), g = d.glass.find((x) => x.id === FR.glass);
-          const meta = { name: c.name, phone: c.phone, email: c.email, details: frDetails(d), model: m.name, size: frSize(d).label, orientation: "landscape", mount: bd.name, glass: g.name, caption: FR.name.trim(),
+          const meta = { name: c.name, phone: c.phone, email: c.email, details: frDetails(d), model: m.name, size: frSize(d).label, mount: bd.name, glass: g.name, caption: FR.name.trim(),
             delivery: FR.delivery, address: FR.delivery === "courier" ? c.address : "", studio: FR.delivery === "pickup" ? FR.studio : "", zoom: FR.zoom, x: Math.round(FR.x * 10) / 10, y: Math.round(FR.y * 10) / 10, website: $("#c-w").value };
           Object.entries(meta).forEach(([k, v]) => fd.append(k, String(v)));
           let r; try { r = await fetch(FRAME_API(), { method: "POST", body: fd }); } catch { throw new Error("net"); }
@@ -575,7 +611,8 @@ pages.frame = async () => {
     if ($("#b")) $("#b").onclick = () => { FR.step--; render(); window.scrollTo({ top: 0 }); };
     if ($("#n")) $("#n").onclick = () => { FR.step++; render(); window.scrollTo({ top: 0 }); };
     const z = $("#frz"); if (z) z.oninput = () => frSetZoom(+z.value);
-    frBindDrag(); frTilt();
+    $$(".fr-views button").forEach((b) => b.onclick = () => { FR.view = b.dataset.v; $$(".fr-views button").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-selected", x === b); }); refreshPrev(); });
+    refreshPrev();
   };
   render();
 };
