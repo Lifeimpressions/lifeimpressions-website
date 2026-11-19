@@ -17,7 +17,7 @@ export const FINISHES = {
   white: { name: "Marble white", color: "#efebe4", metal: 0, rough: 0.55 },
 };
 export const BOARDS = {
-  orange: { name: "Orange", c0: "#d98840", c1: "#94461a", ink: "#141414" },
+  orange: { name: "Orange", c0: "#d47a2e", c1: "#873a12", ink: "#141414" },
   ivory: { name: "Ivory", c0: "#f7f0e2", c1: "#d8ccb4", ink: "#1d1a17" },
   sky: { name: "Sky blue", c0: "#cfe3f2", c1: "#87aecb", ink: "#14202b" },
   pink: { name: "Blush pink", c0: "#f6d7dc", c1: "#d79aa5", ink: "#2a1418" },
@@ -187,7 +187,7 @@ export function buildShadowbox(o, opts = {}) {
   }
   // printed board
   const btex = keep(new THREE.CanvasTexture(drawBoard(o))); btex.colorSpace = THREE.SRGBColorSpace; btex.anisotropy = opts.anisotropy || 1; btex.userData.mimeType = "image/jpeg";
-  const board = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshStandardMaterial({ map: btex, roughness: 0.85 })));
+  const board = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshStandardMaterial({ map: btex, color: 0xd6d6d6, roughness: 0.9, envMapIntensity: 0.6 })));
   board.position.z = BOARD_Z; board.receiveShadow = true; board.name = "board"; group.add(board);
   const back = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 4, ih + 4, BOARD_Z)), wallMat); back.position.z = BOARD_Z / 2 - 0.05; group.add(back);
   // casts
@@ -242,7 +242,7 @@ export function createViewer(host) {
   function setView(name, animate = true) {
     view = name; if (!sb) return;
     const r = Math.max(sb.ow, sb.oh * camera.aspect) / camera.aspect;
-    const dist = (Math.max(sb.ow / camera.aspect, sb.oh) / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.12;
+    const dist = (Math.max(sb.ow / camera.aspect, sb.oh) / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.2;
     void r;
     const pos = name === "angle" ? new THREE.Vector3(-dist * 0.5, dist * 0.2, dist * 0.86) : name === "side" ? new THREE.Vector3(dist * 0.82, -dist * 0.05, dist * 0.55) : name === "close" ? new THREE.Vector3(-sb.iw * 0.12, sb.ih * 0.1, dist * 0.42) : new THREE.Vector3(0, 0, dist);
     const target = name === "close" ? new THREE.Vector3(-sb.iw * 0.25, 0, 20) : new THREE.Vector3(0, 0, 20);
