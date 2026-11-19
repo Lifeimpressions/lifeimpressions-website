@@ -183,13 +183,14 @@ export function buildShadowbox(o, opts = {}) {
   }
   const f = 4.5;
   for (const [w, h, x, y] of [[iw, f, 0, ih / 2 - f / 2], [iw, f, 0, -ih / 2 + f / 2], [f, ih, iw / 2 - f / 2, 0], [f, ih, -iw / 2 + f / 2, 0]]) {
-    const m = new THREE.Mesh(keep(new THREE.BoxGeometry(w, h, 3)), cream); m.position.set(x, y, BOARD_Z + 1.5); m.receiveShadow = true; group.add(m);
+    const m = new THREE.Mesh(keep(new THREE.BoxGeometry(w, h, 3)), cream); m.position.set(x, y, BOARD_Z + 2.5); m.receiveShadow = true; group.add(m);
   }
   // printed board
   const btex = keep(new THREE.CanvasTexture(drawBoard(o))); btex.colorSpace = THREE.SRGBColorSpace; btex.anisotropy = opts.anisotropy || 1; btex.userData.mimeType = "image/jpeg";
   const board = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshStandardMaterial({ map: btex, color: 0xe4e4e4, roughness: 0.9, envMapIntensity: 0.6 })));
   board.position.z = BOARD_Z; board.receiveShadow = true; board.name = "board"; group.add(board);
-  const back = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 4, ih + 4, BOARD_Z)), wallMat); back.position.z = BOARD_Z / 2 - 0.05; group.add(back);
+  // back panel sits 3 mm behind the board: surfaces closer than that flicker on phones (depth precision)
+  const back = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 4, ih + 4, BOARD_Z - 3)), wallMat); back.position.z = (BOARD_Z - 3) / 2; group.add(back);
   // casts
   const fin = FINISHES[o.finish] || FINISHES.silver, skin = keep(skinTexture());
   const castMat = keep(new THREE.MeshStandardMaterial({ color: fin.color, metalness: fin.metal, roughness: fin.rough, bumpMap: skin, bumpScale: 1.6, envMapIntensity: 1.0 }));
