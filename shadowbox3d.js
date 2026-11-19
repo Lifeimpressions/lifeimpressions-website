@@ -10,14 +10,14 @@ import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 import { handSdf, footSdf, meshSdf, HAND_BOUNDS, FOOT_BOUNDS } from "./castmesh.js";
 
 export const FINISHES = {
-  silver: { name: "Silver", color: "#c9ccd2", metal: 0.95, rough: 0.34 },
+  silver: { name: "Silver", color: "#b4b8bf", metal: 0.95, rough: 0.38 },
   gold: { name: "Gold", color: "#d8aa46", metal: 0.95, rough: 0.32 },
   rose: { name: "Rose gold", color: "#d29a88", metal: 0.95, rough: 0.33 },
   bronze: { name: "Bronze", color: "#a26f3e", metal: 0.9, rough: 0.4 },
   white: { name: "Marble white", color: "#efebe4", metal: 0, rough: 0.55 },
 };
 export const BOARDS = {
-  orange: { name: "Orange", c0: "#e79a4c", c1: "#a9541b", ink: "#141414" },
+  orange: { name: "Orange", c0: "#d98840", c1: "#94461a", ink: "#141414" },
   ivory: { name: "Ivory", c0: "#f7f0e2", c1: "#d8ccb4", ink: "#1d1a17" },
   sky: { name: "Sky blue", c0: "#cfe3f2", c1: "#87aecb", ink: "#14202b" },
   pink: { name: "Blush pink", c0: "#f6d7dc", c1: "#d79aa5", ink: "#2a1418" },
@@ -192,7 +192,7 @@ export function buildShadowbox(o, opts = {}) {
   const back = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 4, ih + 4, BOARD_Z)), wallMat); back.position.z = BOARD_Z / 2 - 0.05; group.add(back);
   // casts
   const fin = FINISHES[o.finish] || FINISHES.silver, skin = keep(skinTexture());
-  const castMat = keep(new THREE.MeshStandardMaterial({ color: fin.color, metalness: fin.metal, roughness: fin.rough, bumpMap: skin, bumpScale: 1.6, envMapIntensity: 1.25 }));
+  const castMat = keep(new THREE.MeshStandardMaterial({ color: fin.color, metalness: fin.metal, roughness: fin.rough, bumpMap: skin, bumpScale: 1.6, envMapIntensity: 1.0 }));
   for (const [kind, fx, fy, fl, tilt, mirror] of L.casts) {
     const geo = castGeometry(kind, mirror), m = new THREE.Mesh(geo, castMat), k = (fl * ih) / geo.userData.len;
     m.scale.setScalar(k); m.rotation.z = THREE.MathUtils.degToRad(tilt); m.position.set((fx - 0.5) * iw, (0.5 - fy) * ih, BOARD_Z - 0.5);
@@ -216,7 +216,7 @@ export async function shadowboxGlb(o) {
 export function createViewer(host) {
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 1.0;
+  renderer.outputColorSpace = THREE.SRGBColorSpace; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = 0.92;
   renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   Object.assign(renderer.domElement.style, { display: "block", width: "100%", height: "100%", touchAction: "none" });
   host.prepend(renderer.domElement);

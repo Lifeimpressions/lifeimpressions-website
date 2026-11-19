@@ -109,7 +109,7 @@ $("#ar").onclick = async () => {
 const q = new URLSearchParams(location.search);
 if (q.get("demo")) Object.assign(S, { name: "Aadhvik", dob: "2023-05-24", tob: "23:06", weight: "3 Kg", blood: "A+ve" });
 for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).value = S[k];
-if (q.get("view")) document.querySelector(`[data-v="${q.get("view")}"]`)?.classList.add("on");
+if (q.get("view")) document.querySelectorAll("[data-v]").forEach((x) => x.classList.toggle("on", x.dataset.v === q.get("view")));
 waLink();
 try {
   await fontsReady();
