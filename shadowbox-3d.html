@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Design your 3D shadowbox | Lifeimpressions</title>
+<meta name="description" content="See your baby's hand and foot casts in a black shadowbox frame in 3D, with name, birth date, time, weight, blood group and photo. Turn it around, then view it on your wall.">
+<meta name="theme-color" content="#17130F">
+<link rel="icon" href="assets/icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Instrument+Sans:wght@400;600;700;800&family=Lobster&family=Lora:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .s3-wrap{max-width:1240px;margin:0 auto;padding:22px var(--gutter,20px) 60px}
+  .s3-head h1{font-size:clamp(1.7rem,4vw,2.5rem);margin:6px 0 6px}
+  .s3-head p{color:var(--ink2);margin:0 0 18px;max-width:42em}
+  .s3-grid{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:22px;align-items:start}
+  @media (max-width:900px){.s3-grid{grid-template-columns:1fr}}
+  .s3-stage{position:relative;aspect-ratio:16/10;border-radius:16px;overflow:hidden;background:radial-gradient(120% 90% at 50% 35%,#f3efe8,#ddd6ca)}
+  .s3-stage canvas{cursor:grab} .s3-stage canvas:active{cursor:grabbing}
+  .s3-msg{position:absolute;inset:0;display:grid;place-items:center;color:var(--ink2);font-weight:600;pointer-events:none}
+  .s3-views{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}
+  .s3-views button{min-height:38px;padding:0 14px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font:600 .92rem var(--body);cursor:pointer;color:var(--ink)}
+  .s3-views button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  .s3-panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px}
+  .s3-panel label{display:block;font-weight:600;font-size:.92rem;margin:12px 0 5px}
+  .s3-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .s3-sw{display:flex;gap:8px;flex-wrap:wrap}
+  .s3-sw button{display:inline-flex;align-items:center;gap:7px;min-height:36px;padding:0 12px;border-radius:999px;border:1.5px solid var(--line);background:#fff;font:600 .88rem var(--body);cursor:pointer;color:var(--ink)}
+  .s3-sw button.on{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+  .s3-sw i{width:16px;height:16px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
+  .s3-drop{display:block;border:1.5px dashed var(--line);border-radius:12px;padding:14px;text-align:center;cursor:pointer;background:var(--soft)}
+  .s3-drop b{display:block} .s3-drop span{font-size:.85rem;color:var(--ink2)}
+  .s3-act{display:flex;flex-direction:column;gap:10px;margin-top:16px}
+  .s3-ar{position:fixed;inset:0;z-index:50;background:rgba(15,12,10,.75);display:grid;place-items:center;padding:16px}
+  .s3-ar>div{position:relative;width:min(760px,100%);height:min(620px,90vh);background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
+  .s3-ar model-viewer{flex:1}.s3-ar p{margin:8px 14px 12px}
+  .s3-ar .x{position:absolute;top:8px;right:10px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.2)}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="logo" href="/#/" aria-label="Lifeimpressions home"><img src="assets/logo.png" alt="Lifeimpressions" width="134" height="44"></a>
+  <nav aria-label="Main" style="display:flex;gap:6px;align-items:center"><a class="l" href="/#/frame">Customize my frame</a><a class="btn primary small" href="/#/book">Book now</a></nav>
+</div></header>
+<main class="s3-wrap">
+  <div class="s3-head"><h1>Your shadowbox in 3D</h1><p>Silver hand and foot casts in our Classic Black frame, with your baby's name, birth details and photo. Drag to turn it, pinch or scroll to zoom.</p></div>
+  <div class="s3-grid">
+    <div>
+      <div class="s3-stage" id="stage"><div class="s3-msg" id="msg">Loading the 3D frame…</div></div>
+      <div class="s3-views" role="group" aria-label="View">
+        <button type="button" data-v="front" class="on">Front</button><button type="button" data-v="angle">Angle</button><button type="button" data-v="side">Side</button><button type="button" data-v="close">Close-up</button><button type="button" id="spin" aria-pressed="false">Spin</button>
+      </div>
+      <p class="hint">Sample design. Your casts are made from your baby's own hands and feet, so their shape will be your baby's.</p>
+    </div>
+    <form class="s3-panel" id="f" onsubmit="return false">
+      <label class="s3-drop" for="photo"><input id="photo" type="file" accept="image/*" hidden><b id="photob">Add your photo</b><span>JPG, PNG or WebP. It sits on the right of the frame.</span></label>
+      <label for="zoom">Photo zoom</label><input id="zoom" type="range" min="1" max="2.5" step="0.02" value="1">
+      <label for="name">Name</label><input id="name" maxlength="18" placeholder="For example: Aadhvik" autocomplete="off">
+      <div class="s3-two"><div><label for="dob">Date of birth</label><input id="dob" type="date"></div><div><label for="tob">Time of birth</label><input id="tob" type="time"></div></div>
+      <div class="s3-two"><div><label for="weight">Weight</label><input id="weight" maxlength="8" placeholder="3 Kg" autocomplete="off"></div>
+        <div><label for="blood">Blood group</label><select id="blood"><option value="">Choose</option><option>A+ve</option><option>A-ve</option><option>B+ve</option><option>B-ve</option><option>AB+ve</option><option>AB-ve</option><option>O+ve</option><option>O-ve</option></select></div></div>
+      <label>Cast finish</label><div class="s3-sw" id="finish"></div>
+      <label>Board colour</label><div class="s3-sw" id="board"></div>
+      <label for="size">Size (opening, width x height)</label><select id="size"><option value="50x25">50 x 25 cm</option><option value="60x30">60 x 30 cm</option><option value="40x20">40 x 20 cm</option></select>
+      <div class="s3-act">
+        <button type="button" class="btn gold" id="ar">View on my wall (AR, on your phone)</button>
+        <a class="btn primary" id="wa" target="_blank" rel="noopener" href="#">Order this frame on WhatsApp</a>
+        <p class="hint" style="margin:0">No payment now. We reply with the price and delivery time.</p>
+      </div>
+    </form>
+  </div>
+</main>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/examples/jsm/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import { createViewer, FINISHES, BOARDS, fontsReady, shadowboxGlb } from "./shadowbox3d.js";
+const $ = (s) => document.querySelector(s);
+const S = { wCm: 50, hCm: 25, board: "orange", finish: "silver", glass: true, name: "", dob: "", tob: "", weight: "", blood: "", img: null, zoom: 1, ghost: true };
+const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const swatches = (el, list, key, dot) => { el.innerHTML = Object.entries(list).map(([k, v]) => `<button type="button" data-k="${k}" class="${S[key] === k ? "on" : ""}" aria-pressed="${S[key] === k}"><i style="background:${dot(v)}"></i>${esc(v.name)}</button>`).join("");
+  el.querySelectorAll("button").forEach((b) => b.onclick = () => { S[key] = b.dataset.k; el.querySelectorAll("button").forEach((x) => { x.classList.toggle("on", x === b); x.setAttribute("aria-pressed", x === b); }); refresh(); }); };
+swatches($("#finish"), FINISHES, "finish", (v) => v.color); swatches($("#board"), BOARDS, "board", (v) => `linear-gradient(135deg,${v.c0},${v.c1})`);
+let viewer = null, timer = 0;
+function refresh(now) { clearTimeout(timer); timer = setTimeout(() => viewer && viewer.update(S), now ? 0 : 160); waLink(); }
+function waLink() {
+  const fmtD = S.dob ? S.dob.split("-").reverse().join(".") : "-";
+  const msg = `Hi Lifeimpressions, I would like the Classic Black 3D shadowbox.\nSize: ${S.wCm} x ${S.hCm} cm\nCast finish: ${FINISHES[S.finish].name}\nBoard: ${BOARDS[S.board].name}\nName: ${S.name || "-"}\nDate of birth: ${fmtD}\nTime of birth: ${S.tob || "-"}\nWeight: ${S.weight || "-"}\nBlood group: ${S.blood || "-"}\nI will send my photo here.`;
+  $("#wa").href = "https://wa.me/918754449459?text=" + encodeURIComponent(msg);
+}
+for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).addEventListener("input", (e) => { S[k] = e.target.value; refresh(); });
+$("#zoom").oninput = (e) => { S.zoom = +e.target.value; refresh(); };
+$("#size").onchange = (e) => { const [w, h] = e.target.value.split("x").map(Number); S.wCm = w; S.hCm = h; viewer && viewer.update(S, true); waLink(); };
+$("#photo").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { S.img = im; $("#photob").textContent = "Change photo"; refresh(true); };
+  im.onerror = () => alert("We could not open this photo. iPhone HEIC photos: please share as JPG and try again."); im.src = url; };
+document.querySelectorAll("[data-v]").forEach((b) => b.onclick = () => { document.querySelectorAll("[data-v]").forEach((x) => x.classList.toggle("on", x === b)); viewer && viewer.setView(b.dataset.v); });
+$("#spin").onclick = (e) => { const on = e.currentTarget.getAttribute("aria-pressed") !== "true"; e.currentTarget.setAttribute("aria-pressed", on); e.currentTarget.classList.toggle("on", on); viewer && viewer.setSpin(on); };
+$("#ar").onclick = async () => {
+  const b = $("#ar"); b.disabled = true; b.textContent = "Preparing…";
+  try {
+    if (!customElements.get("model-viewer")) await import("https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js");
+    const url = URL.createObjectURL(await shadowboxGlb(S)), d = document.createElement("div"); d.className = "s3-ar";
+    d.innerHTML = `<div><button class="x" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" camera-controls shadow-intensity="0.6" environment-image="neutral" alt="Your shadowbox"><button slot="ar-button" class="btn gold" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%)">See it on my wall</button></model-viewer><p class="hint">On your phone, point at a wall and tap “See it on my wall”. Shown at real size.</p></div>`;
+    d.querySelector(".x").onclick = () => { d.remove(); URL.revokeObjectURL(url); }; document.body.appendChild(d);
+  } catch (e) { alert("The wall view could not open on this device."); console.error(e); }
+  finally { b.disabled = false; b.textContent = "View on my wall (AR, on your phone)"; }
+};
+// demo values from ?demo=1 so the sample matches the studio photo
+const q = new URLSearchParams(location.search);
+if (q.get("demo")) Object.assign(S, { name: "Aadhvik", dob: "2023-05-24", tob: "23:06", weight: "3 Kg", blood: "A+ve" });
+for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).value = S[k];
+if (q.get("view")) document.querySelector(`[data-v="${q.get("view")}"]`)?.classList.add("on");
+waLink();
+try {
+  await fontsReady();
+  viewer = createViewer($("#stage")); viewer.update(S);
+  if (q.get("view")) viewer.setView(q.get("view"), false);
+  $("#msg").remove(); window.__ready = true;
+} catch (e) { $("#msg").textContent = "3D is not available on this device."; console.error(e); window.__ready = "error"; }
+</script>
+</body>
+</html>
