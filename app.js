@@ -550,6 +550,7 @@ pages.frame = async () => {
       $("#again").onclick = () => { Object.assign(FR, { step: 1, img: null, name: "", dob: "", tob: "", weight: "", height: "", zoom: 1, x: 0, y: 0, done: null }); render(); }; return; }
     const lead = { 1: "Upload your photo", 2: "Choose a frame", 3: "Details for the frame", 4: "Size and finish", 5: "Where should we send it?" }[FR.step];
     main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Customize my frame</h1>
+      <p style="margin:-6px 0 16px"><a class="btn gold small" href="/shadowbox-3d">New: see our Classic Black shadowbox in 3D</a></p>
       <ol class="wiz" aria-label="Steps">${FR_STEPS.map((s, i) => `<li class="${FR.step === i + 1 ? "on" : FR.step > i + 1 ? "done" : ""}"${FR.step === i + 1 ? ' aria-current="step"' : ""}><i>${FR.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
       <p class="wiz-count">Step ${FR.step} of ${FR_STEPS.length}: <b>${FR_STEPS[FR.step - 1]}</b></p>
       <div class="fr-grid"><div class="fr-prev${FR.img ? "" : " empty"}"><div class="panel"><div class="fr-views" role="tablist" aria-label="Preview view">${[["front", "Front"], ["3d", "3D view"], ["wall", "On my wall"]].map(([k, n]) => `<button type="button" role="tab" data-v="${k}" class="${FR.view === k ? "on" : ""}" aria-selected="${FR.view === k}">${n}</button>`).join("")}</div><div id="frp">${frPreview(d)}</div><p class="hint fr-size" id="frhint"></p></div></div>

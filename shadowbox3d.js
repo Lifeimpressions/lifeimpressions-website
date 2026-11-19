@@ -187,7 +187,7 @@ export function buildShadowbox(o, opts = {}) {
   }
   // printed board
   const btex = keep(new THREE.CanvasTexture(drawBoard(o))); btex.colorSpace = THREE.SRGBColorSpace; btex.anisotropy = opts.anisotropy || 1; btex.userData.mimeType = "image/jpeg";
-  const board = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshStandardMaterial({ map: btex, color: 0xd6d6d6, roughness: 0.9, envMapIntensity: 0.6 })));
+  const board = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshStandardMaterial({ map: btex, color: 0xe4e4e4, roughness: 0.9, envMapIntensity: 0.6 })));
   board.position.z = BOARD_Z; board.receiveShadow = true; board.name = "board"; group.add(board);
   const back = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 4, ih + 4, BOARD_Z)), wallMat); back.position.z = BOARD_Z / 2 - 0.05; group.add(back);
   // casts
@@ -244,7 +244,7 @@ export function createViewer(host) {
     const r = Math.max(sb.ow, sb.oh * camera.aspect) / camera.aspect;
     const dist = (Math.max(sb.ow / camera.aspect, sb.oh) / 2) / Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * 1.2;
     void r;
-    const pos = name === "angle" ? new THREE.Vector3(-dist * 0.5, dist * 0.2, dist * 0.86) : name === "side" ? new THREE.Vector3(dist * 0.82, -dist * 0.05, dist * 0.55) : name === "close" ? new THREE.Vector3(-sb.iw * 0.12, sb.ih * 0.1, dist * 0.42) : new THREE.Vector3(0, 0, dist);
+    const pos = name === "angle" ? new THREE.Vector3(-dist * 0.5, dist * 0.17, dist * 1.08) : name === "side" ? new THREE.Vector3(dist * 0.95, -dist * 0.04, dist * 0.7) : name === "close" ? new THREE.Vector3(-sb.iw * 0.12, sb.ih * 0.1, dist * 0.42) : new THREE.Vector3(0, 0, dist);
     const target = name === "close" ? new THREE.Vector3(-sb.iw * 0.25, 0, 20) : new THREE.Vector3(0, 0, 20);
     tween = { from: camera.position.clone(), to: pos, tf: controls.target.clone(), tt: target, t: animate && !calm ? 0 : 1 };
   }
