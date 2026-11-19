@@ -66,6 +66,10 @@
         <div><label for="blood">Blood group</label><select id="blood"><option value="">Choose</option><option>A+ve</option><option>A-ve</option><option>B+ve</option><option>B-ve</option><option>AB+ve</option><option>AB-ve</option><option>O+ve</option><option>O-ve</option></select></div></div>
       <label>Cast finish</label><div class="s3-sw" id="finish"></div>
       <label>Board colour</label><div class="s3-sw" id="board"></div>
+      <label for="bgfile">Or your own background</label>
+      <label class="s3-drop" for="bgfile"><input id="bgfile" type="file" accept="image/*" hidden><b id="bgb">Upload background design</b><span>Design it at 50 x 25 cm (2:1). Best: 3000 x 1500 px or larger, JPG or PNG. The casts sit on top of it.</span></label>
+      <div id="bgopts" hidden><label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="bgtext" style="width:auto;min-height:0"> Also print the name, birth details and photo on top</label>
+        <button type="button" class="btn ghost small" id="bgclear" style="margin-top:8px">Remove my background</button><div id="bgnote"></div></div>
       <label for="size">Size (opening, width x height)</label><select id="size"><option value="50x25">50 x 25 cm</option><option value="60x30">60 x 30 cm</option><option value="40x20">40 x 20 cm</option></select>
       <div class="s3-act">
         <button type="button" class="btn gold" id="ar">View on my wall (AR, on your phone)</button>
@@ -88,10 +92,17 @@ let viewer = null, timer = 0;
 function refresh(now) { clearTimeout(timer); timer = setTimeout(() => viewer && viewer.update(S), now ? 0 : 160); waLink(); }
 function waLink() {
   const fmtD = S.dob ? S.dob.split("-").reverse().join(".") : "-";
-  const msg = `Hi Lifeimpressions, I would like the Classic Black 3D shadowbox.\nSize: ${S.wCm} x ${S.hCm} cm\nCast finish: ${FINISHES[S.finish].name}\nBoard: ${BOARDS[S.board].name}\nName: ${S.name || "-"}\nDate of birth: ${fmtD}\nTime of birth: ${S.tob || "-"}\nWeight: ${S.weight || "-"}\nBlood group: ${S.blood || "-"}\nI will send my photo here.`;
+  const msg = `Hi Lifeimpressions, I would like the Classic Black 3D shadowbox.\nSize: ${S.wCm} x ${S.hCm} cm\nCast finish: ${FINISHES[S.finish].name}\nBoard: ${BOARDS[S.board].name}\nName: ${S.name || "-"}\nDate of birth: ${fmtD}\nTime of birth: ${S.tob || "-"}\nWeight: ${S.weight || "-"}\nBlood group: ${S.blood || "-"}${S.bg ? "\nBackground: my own design (I will send the file)" : ""}\nI will send my photo here.`;
   $("#wa").href = "https://wa.me/918754449459?text=" + encodeURIComponent(msg);
 }
 for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).addEventListener("input", (e) => { S[k] = e.target.value; refresh(); });
+$("#bgfile").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), im = new Image();
+  im.onload = () => { S.bg = im; $("#bgb").textContent = "Change background design"; $("#bgopts").hidden = false;
+    const r = im.width / im.height; $("#bgnote").innerHTML = Math.abs(r - 2) > 0.04 ? `<p class="note" style="margin-top:8px">This design is ${im.width} x ${im.height} px, not 2:1, so its edges are trimmed to fit 50 x 25 cm.</p>` : im.width < 2000 ? `<p class="note" style="margin-top:8px">This design is ${im.width} px wide. For a sharp print, export it at 3000 px wide or more.</p>` : "";
+    refresh(true); };
+  im.onerror = () => alert("We could not open this image. Please use JPG or PNG."); im.src = url; };
+$("#bgtext").onchange = (e) => { S.bgText = e.target.checked; refresh(true); };
+$("#bgclear").onclick = () => { S.bg = null; S.bgText = false; $("#bgtext").checked = false; $("#bgfile").value = ""; $("#bgopts").hidden = true; $("#bgb").textContent = "Upload background design"; refresh(true); };
 $("#zoom").oninput = (e) => { S.zoom = +e.target.value; refresh(); };
 $("#size").onchange = (e) => { const [w, h] = e.target.value.split("x").map(Number); setSize(w, h); };
 $("#photo").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), im = new Image();

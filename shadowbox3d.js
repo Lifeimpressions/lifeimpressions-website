@@ -45,21 +45,28 @@ export async function fontsReady() {
 
 /** The printed board as a canvas (customer photo, name and the four birth details). */
 export function drawBoard(o) {
-  const W = 2400, H = Math.round(W * o.hCm / o.wCm), b = BOARDS[o.board] || BOARDS.orange;
+  const W = o.bg ? 3000 : 2400, H = Math.round(W * o.hCm / o.wCm), b = BOARDS[o.board] || BOARDS.orange;
   const c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
   const s = H / 1000;   // layout unit: the sample frame is laid out on its height
-  // background: lit from the middle, darker at the edges, with a soft mottle
-  const bg = g.createRadialGradient(W * 0.55, H * 0.42, H * 0.1, W * 0.5, H * 0.5, W * 0.62);
-  bg.addColorStop(0, b.c0); bg.addColorStop(1, b.c1); g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const r = rng(7);
-  for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${r() < 0.5 ? "0,0,0" : "255,255,255"},${0.012 + r() * 0.02})`; g.beginPath(); g.arc(r() * W, r() * H, 20 + r() * 140, 0, 7); g.fill(); }
+  if (o.bg) {
+    // your own design (made at 50 x 25 cm) fills the whole board; it is cropped to fit if the shape differs
+    const k = Math.max(W / o.bg.width, H / o.bg.height), dw = o.bg.width * k, dh = o.bg.height * k;
+    g.drawImage(o.bg, (W - dw) / 2, (H - dh) / 2, dw, dh);
+    if (!o.bgText) return c;
+  } else {
+    // background: lit from the middle, darker at the edges, with a soft mottle
+    const bg = g.createRadialGradient(W * 0.55, H * 0.42, H * 0.1, W * 0.5, H * 0.5, W * 0.62);
+    bg.addColorStop(0, b.c0); bg.addColorStop(1, b.c1); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+    const r = rng(7);
+    for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(${r() < 0.5 ? "0,0,0" : "255,255,255"},${0.012 + r() * 0.02})`; g.beginPath(); g.arc(r() * W, r() * H, 20 + r() * 140, 0, 7); g.fill(); }
+  }
   // photo, on the right, fading into the board on its left edge
   const px = W * L.photo[0], pw = W - px;
   const ph = document.createElement("canvas"); ph.width = Math.ceil(pw); ph.height = H; const q = ph.getContext("2d");
   if (o.img) {
     const k = Math.max(pw / o.img.width, H / o.img.height) * (o.zoom || 1), dw = o.img.width * k, dh = o.img.height * k;
     q.drawImage(o.img, (pw - dw) / 2 + (o.x || 0) / 100 * pw, (H - dh) / 2 + (o.y || 0) / 100 * H, dw, dh);
-  } else {
+  } else if (!o.bg) {
     q.fillStyle = "rgba(255,255,255,.22)"; q.beginPath(); q.arc(pw * 0.55, H * 0.36, H * 0.13, 0, 7); q.fill();
     q.beginPath(); q.ellipse(pw * 0.55, H * 0.82, H * 0.24, H * 0.27, 0, Math.PI, 0); q.fill();
     q.fillStyle = "rgba(0,0,0,.45)"; q.font = `600 ${52 * s}px 'Instrument Sans', Arial, sans-serif`; q.textAlign = "center"; q.fillText("Your photo here", pw * 0.55, H * 0.93);
