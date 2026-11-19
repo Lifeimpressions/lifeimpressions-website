@@ -55,7 +55,7 @@
       <div class="s3-views" role="group" aria-label="View">
         <button type="button" data-v="front" class="on">Front</button><button type="button" data-v="angle">Angle</button><button type="button" data-v="side">Side</button><button type="button" data-v="close">Close-up</button><button type="button" id="spin" aria-pressed="false">Spin</button>
       </div>
-      <p class="hint">Sample design. Your casts are made from your baby's own hands and feet, so their shape will be your baby's.</p>
+      <p class="hint">Sample design. Your casts are made from your baby's own hands and feet, so their shape will be your baby's.<br><small>Hand model: “Baby's Hand” by <a href="https://sketchfab.com/dexterxu-sh" target="_blank" rel="noopener">dexterxu-sh</a>, <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>, simplified.</small></p>
     </div>
     <form class="s3-panel" id="f" onsubmit="return false">
       <label class="s3-drop" for="photo"><input id="photo" type="file" accept="image/*" hidden><b id="photob">Add your photo</b><span>JPG, PNG or WebP. It sits on the right of the frame.</span></label>
@@ -77,7 +77,7 @@
 </main>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/examples/jsm/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
-import { createViewer, FINISHES, BOARDS, fontsReady, shadowboxGlb } from "./shadowbox3d.js";
+import { createViewer, FINISHES, BOARDS, fontsReady, shadowboxGlb, loadHandScan } from "./shadowbox3d.js";
 const $ = (s) => document.querySelector(s);
 const S = { wCm: 50, hCm: 25, board: "orange", finish: "silver", glass: true, name: "", dob: "", tob: "", weight: "", blood: "", img: null, zoom: 1, ghost: true };
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -163,7 +163,7 @@ for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).value = S[
 if (q.get("view")) document.querySelectorAll("[data-v]").forEach((x) => x.classList.toggle("on", x.dataset.v === q.get("view")));
 waLink();
 try {
-  await fontsReady();
+  await Promise.all([fontsReady(), loadHandScan()]);
   viewer = createViewer($("#stage")); viewer.update(S);
   if (q.get("view")) viewer.setView(q.get("view"), false);
   $("#msg").remove(); window.__ready = true;

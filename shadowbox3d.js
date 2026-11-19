@@ -124,10 +124,38 @@ function skinTexture() {
   const t = new THREE.CanvasTexture(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.2, 2.2); t.userData.mimeType = "image/png"; return t;
 }
 
+// Real baby hand scan: "Baby's Hand" by dexterxu-sh (sketchfab.com/dexterxu-sh), CC BY 4.0, reduced to ~66k triangles.
+// File layout: uint32 [vertices, indices, 32-bit indices?, scale], int16 xyz * scale (mm), then the indices.
+// Oriented fingers +y, palm +z, thumb -x, wrist cut at the bottom.
+let SCAN = null;
+export async function loadHandScan(url = "assets/models/baby-hand.bin") {
+  if (SCAN) return SCAN;
+  try {
+    const buf = await (await fetch(url)).arrayBuffer(), [n, ni, big, sc] = new Uint32Array(buf, 0, 4);
+    const q = new Int16Array(buf, 16, n * 3), pos = new Float32Array(n * 3), uv = new Float32Array(n * 2);
+    for (let i = 0; i < n * 3; i++) pos[i] = q[i] / sc;
+    const io = 16 + n * 6 + ((n * 6) % 4 ? 2 : 0), idx = big ? new Uint32Array(buf, io, ni) : new Uint16Array(buf, io, ni);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute("position", new THREE.BufferAttribute(pos, 3)); geo.setIndex(new THREE.BufferAttribute(idx.slice(), 1));
+    geo.rotateX(THREE.MathUtils.degToRad(-9));        // the scan's fingers lift toward the viewer; lay the hand back a little
+    for (let i = 0; i < n; i++) { uv[i * 2] = pos[i * 3] / 70 + 0.5; uv[i * 2 + 1] = pos[i * 3 + 1] / 70 + 0.5; }
+    geo.setAttribute("uv", new THREE.BufferAttribute(uv, 2)); geo.computeVertexNormals();
+    SCAN = geo;
+  } catch (e) { console.warn("Hand scan not loaded, using the modelled hand", e); SCAN = false; }
+  return SCAN;
+}
+
 const GEO = {};
 function castGeometry(kind, mirror) {
-  const key = kind + (mirror ? "-m" : "");
+  const key = kind + (mirror ? "-m" : "") + (kind === "hand" && SCAN ? "-scan" : "");
   if (GEO[key]) return GEO[key];
+  if (kind === "hand" && SCAN) {
+    const geo = SCAN.clone();
+    if (mirror) { geo.scale(-1, 1, 1); const ix = geo.index.array; for (let i = 0; i < ix.length; i += 3) { const t = ix[i + 1]; ix[i + 1] = ix[i + 2]; ix[i + 2] = t; } geo.computeVertexNormals(); }
+    geo.computeBoundingBox(); const bb = geo.boundingBox, depth = bb.max.z - bb.min.z;
+    geo.translate(-(bb.min.x + bb.max.x) / 2, -(bb.min.y + bb.max.y) / 2, -bb.min.z);
+    geo.userData = { len: bb.max.y - bb.min.y, sink: depth * 0.38, shared: true };
+    return (GEO[key] = geo);
+  }
   const m = meshSdf(kind === "hand" ? handSdf() : footSdf(), kind === "hand" ? HAND_BOUNDS : FOOT_BOUNDS, 0.9, -9, mirror);
   const geo = new THREE.BufferGeometry();
   geo.setAttribute("position", new THREE.BufferAttribute(m.positions, 3));
@@ -196,7 +224,7 @@ export function buildShadowbox(o, opts = {}) {
   const castMat = keep(new THREE.MeshStandardMaterial({ color: fin.color, metalness: fin.metal, roughness: fin.rough, bumpMap: skin, bumpScale: 1.6, envMapIntensity: 1.0 }));
   for (const [kind, fx, fy, fl, tilt, mirror] of L.casts) {
     const geo = castGeometry(kind, mirror), m = new THREE.Mesh(geo, castMat), k = (fl * ih) / geo.userData.len;
-    m.scale.setScalar(k); m.rotation.z = THREE.MathUtils.degToRad(tilt); m.position.set((fx - 0.5) * iw, (0.5 - fy) * ih, BOARD_Z - 0.5);
+    m.scale.setScalar(k); m.rotation.z = THREE.MathUtils.degToRad(tilt); m.position.set((fx - 0.5) * iw, (0.5 - fy) * ih, BOARD_Z - 0.5 - (geo.userData.sink || 0) * k);
     m.castShadow = true; m.receiveShadow = true; m.name = "cast-" + kind; group.add(m);
   }
   if (o.glass) {
@@ -208,6 +236,7 @@ export function buildShadowbox(o, opts = {}) {
 
 /** "View on my wall": the frame as a GLB in metres, for the phone's AR viewer. */
 export async function shadowboxGlb(o) {
+  await loadHandScan();
   const sb = buildShadowbox({ ...o, glass: false });
   const root = new THREE.Group(); root.name = "lifeimpressions-shadowbox"; root.scale.setScalar(0.001); root.add(sb.group);
   try { return new Blob([await new GLTFExporter().parseAsync(root, { binary: true, maxTextureSize: 2048 })], { type: "model/gltf-binary" }); }
