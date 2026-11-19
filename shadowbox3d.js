@@ -242,7 +242,7 @@ export function buildShadowbox(o, opts = {}) {
   }
   if (o.glass) {
     // slim glass just under the lip: clear, with sharp reflections of the room
-    const glassMat = keep(new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.14,
+    const glassMat = keep(new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.08,
       ior: 1.5, specularIntensity: 1, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false }));
     const gl = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 2, ih + 2, GLASS_T)), glassMat);
     gl.position.z = MOULD.lip - GLASS_T / 2 - 0.5; gl.name = "glass"; gl.renderOrder = 2; group.add(gl);
