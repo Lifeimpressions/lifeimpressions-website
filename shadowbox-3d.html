@@ -36,6 +36,10 @@
   .s3-ar>div{position:relative;width:min(760px,100%);height:min(620px,90vh);background:#fff;border-radius:16px;overflow:hidden;display:flex;flex-direction:column}
   .s3-ar model-viewer{flex:1}.s3-ar p{margin:8px 14px 12px}
   .s3-ar .x{position:absolute;top:8px;right:10px;z-index:2;width:38px;height:38px;border-radius:50%;border:0;background:#fff;font-size:1.5rem;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.2)}
+  .s3-size{position:absolute;top:12px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;padding:8px 16px;border-radius:14px;background:rgba(18,15,12,.78);color:#fff;text-align:center;pointer-events:none;white-space:nowrap;font-family:var(--body)}
+  .s3-size b{font-size:1.35rem;letter-spacing:.01em} .s3-size span{font-size:.85rem;opacity:.9} .s3-size small{font-size:.75rem;opacity:.75}
+  .s3-size.on{top:max(16px,env(safe-area-inset-top))} .s3-size.on b{font-size:1.7rem}
+  .s3-pick{margin:8px 14px 0;padding:10px 12px;border-radius:12px;background:var(--soft);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -89,22 +93,69 @@ function waLink() {
 }
 for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).addEventListener("input", (e) => { S[k] = e.target.value; refresh(); });
 $("#zoom").oninput = (e) => { S.zoom = +e.target.value; refresh(); };
-$("#size").onchange = (e) => { const [w, h] = e.target.value.split("x").map(Number); S.wCm = w; S.hCm = h; viewer && viewer.update(S, true); waLink(); };
+$("#size").onchange = (e) => { const [w, h] = e.target.value.split("x").map(Number); setSize(w, h); };
 $("#photo").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), im = new Image();
   im.onload = () => { S.img = im; $("#photob").textContent = "Change photo"; refresh(true); };
   im.onerror = () => alert("We could not open this photo. iPhone HEIC photos: please share as JPG and try again."); im.src = url; };
 document.querySelectorAll("[data-v]").forEach((b) => b.onclick = () => { document.querySelectorAll("[data-v]").forEach((x) => x.classList.toggle("on", x === b)); viewer && viewer.setView(b.dataset.v); });
 $("#spin").onclick = (e) => { const on = e.currentTarget.getAttribute("aria-pressed") !== "true"; e.currentTarget.setAttribute("aria-pressed", on); e.currentTarget.classList.toggle("on", on); viewer && viewer.setSpin(on); };
+// live size while sizing the frame on the wall: read the real-world width of the board as model-viewer draws it
+const MOULD_CM = 7;
+function boardMesh(mv) {
+  const sym = Object.getOwnPropertySymbols(mv).find((s) => s.description === "scene"), scene = sym && mv[sym];
+  if (!scene) return null; let hit = null;
+  (function walk(o) { if (hit || !o) return; if (o.isMesh && /board/i.test(o.name || "")) hit = o; (o.children || []).forEach(walk); })(scene);
+  return hit;
+}
+function worldScale(m) { m.updateWorldMatrix?.(true, false); const e = m.matrixWorld.elements; return Math.hypot(e[0], e[1], e[2]); }
+const fmtSize = (w, h) => `${Math.round(w)} × ${Math.round(h)} cm`;
 $("#ar").onclick = async () => {
   const b = $("#ar"); b.disabled = true; b.textContent = "Preparing…";
   try {
     if (!customElements.get("model-viewer")) await import("https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js");
-    const url = URL.createObjectURL(await shadowboxGlb(S)), d = document.createElement("div"); d.className = "s3-ar";
-    d.innerHTML = `<div><button class="x" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" camera-controls shadow-intensity="0.6" environment-image="neutral" alt="Your shadowbox"><button slot="ar-button" class="btn gold" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%)">See it on my wall</button></model-viewer><p class="hint">On your phone, point at a wall and tap “See it on my wall”. Shown at real size.</p></div>`;
-    d.querySelector(".x").onclick = () => { d.remove(); URL.revokeObjectURL(url); }; document.body.appendChild(d);
+    const base = { w: S.wCm, h: S.hCm }, url = URL.createObjectURL(await shadowboxGlb(S)), d = document.createElement("div"); d.className = "s3-ar";
+    const pct = (k) => fmtSize(base.w * k, base.h * k);
+    d.innerHTML = `<div><button class="x" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" ar-scale="auto" camera-controls shadow-intensity="0.6" environment-image="neutral" alt="Your shadowbox">
+      <div class="s3-size" id="arsize" aria-live="polite"><b>${fmtSize(base.w, base.h)}</b><span>Frame outside ${fmtSize(base.w + 2 * MOULD_CM, base.h + 2 * MOULD_CM)}</span><small>Pinch to make it bigger or smaller</small></div>
+      <button slot="ar-button" class="btn gold" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%)">See it on my wall</button></model-viewer>
+      <div id="arnew"></div>
+      <p class="hint">On your phone, point at a wall and tap “See it on my wall”. It starts at the real size, ${fmtSize(base.w, base.h)}. Pinch to resize: the size in cm updates as you go. On iPhone the size shows as a percentage: 100% is ${pct(1)}, 120% is ${pct(1.2)}, 150% is ${pct(1.5)}.</p></div>`;
+    const mv = d.querySelector("model-viewer"), lab = d.querySelector("#arsize");
+    let last = null, live = false, scale0 = null;
+    const tick = () => {
+      const m = boardMesh(mv); if (!m) return;
+      const s = worldScale(m); if (!s) return;
+      // the board is base.w cm wide in the file, stored in mm under a 0.001 root, and the AR world is in metres,
+      // so s * 1000 is the size factor (1 = true size). If a viewer rescales the scene, fall back to the change since AR started.
+      if (!live) { scale0 = s; return; }
+      let k = s * 1000; if (!(k > 0.05 && k < 20)) k = s / scale0;
+      const w = base.w * k, h = base.h * k;
+      if (last && Math.abs(last.w - w) < 0.3) return;
+      last = { w, h };
+      lab.innerHTML = `<b>${fmtSize(w, h)}</b><span>Frame outside ${fmtSize(w + 2 * MOULD_CM * k, h + 2 * MOULD_CM * k)}</span><small>${Math.round(k * 100)}% · pinch to resize</small>`;
+    };
+    const timer = setInterval(tick, 150);
+    mv.addEventListener("ar-status", (e) => {
+      const st = e.detail.status;
+      if (st === "session-started") { tick(); live = true; last = null; lab.classList.add("on"); }
+      if (st === "not-presenting" && live) {
+        live = false; lab.classList.remove("on");
+        if (last && Math.abs(last.w - base.w) >= 1) {
+          const w = Math.round(last.w), hh = Math.round(last.h);
+          d.querySelector("#arnew").innerHTML = `<div class="s3-pick">On your wall you chose <b>${fmtSize(w, hh)}</b>. <button type="button" class="btn primary small" id="usesz">Use this size</button></div>`;
+          d.querySelector("#usesz").onclick = () => { setSize(w, hh, true); d.querySelector(".x").click(); };
+        }
+      }
+    });
+    d.querySelector(".x").onclick = () => { clearInterval(timer); d.remove(); URL.revokeObjectURL(url); }; document.body.appendChild(d);
   } catch (e) { alert("The wall view could not open on this device."); console.error(e); }
   finally { b.disabled = false; b.textContent = "View on my wall (AR, on your phone)"; }
 };
+function setSize(w, h, custom) {
+  S.wCm = w; S.hCm = h; const sel = $("#size"), v = `${w}x${h}`;
+  if (![...sel.options].some((o) => o.value === v)) { sel.querySelector("[data-custom]")?.remove(); const o = new Option(`${w} x ${h} cm (my wall)`, v); o.dataset.custom = "1"; sel.add(o); }
+  sel.value = v; viewer && viewer.update(S, true); waLink();
+}
 // demo values from ?demo=1 so the sample matches the studio photo
 const q = new URLSearchParams(location.search);
 if (q.get("demo")) Object.assign(S, { name: "Aadhvik", dob: "2023-05-24", tob: "23:06", weight: "3 Kg", blood: "A+ve" });
