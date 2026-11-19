@@ -25,8 +25,14 @@ export const BOARDS = {
 };
 
 // moulding profile: [in from the outer edge, height off the wall] mm. Inner flat (black) is the lip at 50 mm.
-const MOULD = { W: 70, lip: 50, p: [[0, 0], [0, 54], [1.8, 58.5], [6, 61.5], [12, 62.5], [18, 61.5], [21.5, 58], [24, 56], [28, 57.5], [32.5, 60], [37.5, 61], [42, 60.2], [45.5, 57.5], [49, 53.5], [56, 51], [62, 50], [70, 50], [70, 0]] };
 const BOARD_Z = 6;
+// Inside depth of the box, from the board to the glass: 2.5 inches.
+export const INSIDE_DEPTH = 63.5;
+// moulding profile: [in from the outer edge, height off the wall] mm, drawn for a lip at 50 mm and lifted to the real lip.
+const PROFILE = [[0, 0], [0, 54], [1.8, 58.5], [6, 61.5], [12, 62.5], [18, 61.5], [21.5, 58], [24, 56], [28, 57.5], [32.5, 60], [37.5, 61], [42, 60.2], [45.5, 57.5], [49, 53.5], [56, 51], [62, 50], [70, 50], [70, 0]];
+const LIP = BOARD_Z + INSIDE_DEPTH;
+const MOULD = { W: 70, lip: LIP, p: PROFILE.map(([x, y]) => [x, y === 0 ? 0 : y + LIP - 50]) };
+const GLASS_T = 2;   // slim 2 mm glass
 
 // ---------- layout of the board, as fractions of the opening (from the Lifeimpressions sample frame) ----------
 const L = {
@@ -235,8 +241,21 @@ export function buildShadowbox(o, opts = {}) {
     m.castShadow = true; m.receiveShadow = true; m.name = "cast-" + kind; group.add(m);
   }
   if (o.glass) {
-    const gl = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, transmission: 1, thickness: 0.5, transparent: true, opacity: 0.1, envMapIntensity: 1.1 })));
-    gl.position.z = MOULD.lip - 1; gl.name = "glass"; group.add(gl);
+    // slim glass just under the lip: clear, with sharp reflections of the room
+    const glassMat = keep(new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.14,
+      ior: 1.5, specularIntensity: 1, clearcoat: 1, clearcoatRoughness: 0.02, envMapIntensity: 2.4, depthWrite: false }));
+    const gl = new THREE.Mesh(keep(new THREE.BoxGeometry(iw + 2, ih + 2, GLASS_T)), glassMat);
+    gl.position.z = MOULD.lip - GLASS_T / 2 - 0.5; gl.name = "glass"; gl.renderOrder = 2; group.add(gl);
+    if (!opts.forExport) {
+      // soft diagonal glare streaks, the way light catches framed glass (screen only, not in the AR file)
+      const gc = document.createElement("canvas"); gc.width = 1024; gc.height = 512; const g = gc.getContext("2d");
+      const band = (x, w, a) => { const gr = g.createLinearGradient(x - w, 0, x + w, 0); gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(0.5, `rgba(255,255,255,${a})`); gr.addColorStop(1, "rgba(255,255,255,0)"); g.fillStyle = gr; g.fillRect(x - w, 0, 2 * w, 512); };
+      g.save(); g.translate(512, 256); g.rotate(-0.55); g.translate(-512, -256);
+      band(330, 150, 0.5); band(470, 40, 0.65); band(760, 90, 0.3); g.restore();
+      const gt = keep(new THREE.CanvasTexture(gc)); gt.colorSpace = THREE.SRGBColorSpace;
+      const glare = new THREE.Mesh(keep(new THREE.PlaneGeometry(iw, ih)), keep(new THREE.MeshBasicMaterial({ map: gt, transparent: true, opacity: 0.16, blending: THREE.AdditiveBlending, depthWrite: false })));
+      glare.position.z = MOULD.lip - 0.4; glare.name = "glass-glare"; glare.renderOrder = 3; group.add(glare);
+    }
   }
   return { group, ow, oh, iw, ih, dispose: () => own.forEach((x) => x.dispose()) };
 }
@@ -244,7 +263,7 @@ export function buildShadowbox(o, opts = {}) {
 /** "View on my wall": the frame as a GLB in metres, for the phone's AR viewer. */
 export async function shadowboxGlb(o) {
   await loadHandScan();
-  const sb = buildShadowbox({ ...o, glass: false });
+  const sb = buildShadowbox(o, { forExport: true });
   const root = new THREE.Group(); root.name = "lifeimpressions-shadowbox"; root.scale.setScalar(0.001); root.add(sb.group);
   try { return new Blob([await new GLTFExporter().parseAsync(root, { binary: true, maxTextureSize: 2048 })], { type: "model/gltf-binary" }); }
   finally { sb.dispose(); }

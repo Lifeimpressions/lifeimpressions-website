@@ -40,6 +40,13 @@
   .s3-size b{font-size:1.35rem;letter-spacing:.01em} .s3-size span{font-size:.85rem;opacity:.9} .s3-size small{font-size:.75rem;opacity:.75}
   .s3-size.on{top:max(16px,env(safe-area-inset-top))} .s3-size.on b{font-size:1.7rem}
   .s3-pick{margin:8px 14px 0;padding:10px 12px;border-radius:12px;background:var(--soft);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .s3-switch{display:flex!important;align-items:center;justify-content:space-between;gap:12px;margin:16px 0 0!important;padding:12px 14px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+  .s3-switch span{display:flex;flex-direction:column;gap:2px} .s3-switch small{font-weight:400;color:var(--ink2);font-size:.82rem}
+  .s3-switch input{position:absolute;opacity:0;width:1px;height:1px}
+  .s3-switch i{flex:none;position:relative;width:46px;height:26px;border-radius:999px;background:#cfc8bd;transition:background .2s}
+  .s3-switch i::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .2s}
+  .s3-switch input:checked+i{background:var(--ink)} .s3-switch input:checked+i::after{transform:translateX(20px)}
+  .s3-switch input:focus-visible+i{outline:2px solid var(--ink);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -71,6 +78,7 @@
       <div id="bgopts" hidden><label style="display:flex;gap:8px;align-items:center;font-weight:500"><input type="checkbox" id="bgtext" style="width:auto;min-height:0"> Also print the name, birth details and photo on top</label>
         <button type="button" class="btn ghost small" id="bgclear" style="margin-top:8px">Remove my background</button><div id="bgnote"></div></div>
       <label for="size">Size (opening, width x height)</label><select id="size"><option value="50x25">50 x 25 cm</option><option value="60x30">60 x 30 cm</option><option value="40x20">40 x 20 cm</option></select>
+      <label class="s3-switch"><span><b>Glass front</b><small>Slim 2 mm glass with reflections. Box depth inside: 2.5 in (6.35 cm).</small></span><input type="checkbox" id="glass" role="switch" checked><i aria-hidden="true"></i></label>
       <div class="s3-act">
         <button type="button" class="btn gold" id="ar">View on my wall (AR, on your phone)</button>
         <a class="btn primary" id="wa" target="_blank" rel="noopener" href="#">Order this frame on WhatsApp</a>
@@ -92,7 +100,7 @@ let viewer = null, timer = 0;
 function refresh(now) { clearTimeout(timer); timer = setTimeout(() => viewer && viewer.update(S), now ? 0 : 160); waLink(); }
 function waLink() {
   const fmtD = S.dob ? S.dob.split("-").reverse().join(".") : "-";
-  const msg = `Hi Lifeimpressions, I would like the Classic Black 3D shadowbox.\nSize: ${S.wCm} x ${S.hCm} cm\nCast finish: ${FINISHES[S.finish].name}\nBoard: ${BOARDS[S.board].name}\nName: ${S.name || "-"}\nDate of birth: ${fmtD}\nTime of birth: ${S.tob || "-"}\nWeight: ${S.weight || "-"}\nBlood group: ${S.blood || "-"}${S.bg ? "\nBackground: my own design (I will send the file)" : ""}\nI will send my photo here.`;
+  const msg = `Hi Lifeimpressions, I would like the Classic Black 3D shadowbox.\nSize: ${S.wCm} x ${S.hCm} cm\nCast finish: ${FINISHES[S.finish].name}\nBoard: ${BOARDS[S.board].name}\nName: ${S.name || "-"}\nDate of birth: ${fmtD}\nTime of birth: ${S.tob || "-"}\nWeight: ${S.weight || "-"}\nBlood group: ${S.blood || "-"}\nGlass: ${S.glass ? "Yes" : "No"}${S.bg ? "\nBackground: my own design (I will send the file)" : ""}\nI will send my photo here.`;
   $("#wa").href = "https://wa.me/918754449459?text=" + encodeURIComponent(msg);
 }
 for (const k of ["name", "dob", "tob", "weight", "blood"]) $("#" + k).addEventListener("input", (e) => { S[k] = e.target.value; refresh(); });
@@ -103,6 +111,7 @@ $("#bgfile").onchange = (e) => { const f = e.target.files[0]; if (!f) return; co
   im.onerror = () => alert("We could not open this image. Please use JPG or PNG."); im.src = url; };
 $("#bgtext").onchange = (e) => { S.bgText = e.target.checked; refresh(true); };
 $("#bgclear").onclick = () => { S.bg = null; S.bgText = false; $("#bgtext").checked = false; $("#bgfile").value = ""; $("#bgopts").hidden = true; $("#bgb").textContent = "Upload background design"; refresh(true); };
+$("#glass").onchange = (e) => { S.glass = e.target.checked; refresh(true); };
 $("#zoom").oninput = (e) => { S.zoom = +e.target.value; refresh(); };
 $("#size").onchange = (e) => { const [w, h] = e.target.value.split("x").map(Number); setSize(w, h); };
 $("#photo").onchange = (e) => { const f = e.target.files[0]; if (!f) return; const url = URL.createObjectURL(f), im = new Image();
