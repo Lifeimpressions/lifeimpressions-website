@@ -294,7 +294,12 @@ function bakeShadows(group, casts, keep, iw, ih, ow, oh) {
     for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrix); xy[i * 2] = (v.x + iw / 2) * PX; xy[i * 2 + 1] = (ih / 2 - v.y) * PX; top = Math.max(top, v.z); }
     const h = Math.max(0, top - BOARD_Z), dx = -h * 0.32 * PX, dy = h * 0.42 * PX;    // taller casts throw longer shadows
     s.save(); s.translate(dx, dy); s.beginPath();
-    for (let i = 0; i < idx.length; i += 3) { const a = idx[i] * 2, b = idx[i + 1] * 2, d = idx[i + 2] * 2; s.moveTo(xy[a], xy[a + 1]); s.lineTo(xy[b], xy[b + 1]); s.lineTo(xy[d], xy[d + 1]); s.closePath(); }
+    // only the faces turned one way: front and back faces wind in opposite directions and would cancel out when filled
+    for (let i = 0; i < idx.length; i += 3) {
+      const a = idx[i] * 2, b = idx[i + 1] * 2, d = idx[i + 2] * 2;
+      if ((xy[b] - xy[a]) * (xy[d + 1] - xy[a + 1]) - (xy[b + 1] - xy[a + 1]) * (xy[d] - xy[a]) <= 0) continue;
+      s.moveTo(xy[a], xy[a + 1]); s.lineTo(xy[b], xy[b + 1]); s.lineTo(xy[d], xy[d + 1]); s.closePath();
+    }
     s.fill(); s.restore();
   }
   const g = c.getContext("2d"); g.globalAlpha = 0.55; g.drawImage(softened(sil, 7 * PX), 0, 0); g.globalAlpha = 1;
