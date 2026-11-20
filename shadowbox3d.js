@@ -297,7 +297,7 @@ function bakeShadows(group, casts, keep, iw, ih, ow, oh) {
     // only the faces turned one way: front and back faces wind in opposite directions and would cancel out when filled
     for (let i = 0; i < idx.length; i += 3) {
       const a = idx[i] * 2, b = idx[i + 1] * 2, d = idx[i + 2] * 2;
-      if ((xy[b] - xy[a]) * (xy[d + 1] - xy[a + 1]) - (xy[b + 1] - xy[a + 1]) * (xy[d] - xy[a]) <= 0) continue;
+      if ((xy[b] - xy[a]) * (xy[d + 1] - xy[a + 1]) - (xy[b + 1] - xy[a + 1]) * (xy[d] - xy[a]) >= 0) continue;   // keep faces that look out of the board (y is flipped on the canvas)
       s.moveTo(xy[a], xy[a + 1]); s.lineTo(xy[b], xy[b + 1]); s.lineTo(xy[d], xy[d + 1]); s.closePath();
     }
     s.fill(); s.restore();
