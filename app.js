@@ -84,7 +84,7 @@ pages.home = async () => {
     <div><h3>Get your confirmation</h3><p class="hint">Email with a link to view, reschedule or cancel up to 24 hours before.</p></div></div></div></section>
   <section class="s soft"><div class="wrap"><div class="head"><div><h2>What we cast</h2><p>Every session includes impressions, casting, printing and framing.</p></div><a class="btn ghost small" href="#/services">All services</a></div>
     <div class="grid" id="cats"></div></div></section>
-  <section class="s soft"><div class="wrap fr-band"><div><h2 style="margin:0 0 6px">Customize my frame</h2><p class="hint" style="margin:0;max-width:40em">Upload your own photo, pick a frame, size and mount, and see it before you send. We reply with the price.</p></div><a class="btn primary" href="#/frame">Design my frame</a></div></section>
+  <section class="s soft"><div class="wrap fr-band"><div><h2 style="margin:0 0 6px">Customize my frame</h2><p class="hint" style="margin:0;max-width:40em">See your baby\'s casts in our shadowbox in 3D, add the name, birth details and photo, and view it on your wall. We reply with the price.</p></div><a class="btn primary" href="/shadowbox-3d">Design my frame</a></div></section>
   <section class="s deep"><div class="wrap"><div class="head"><div><h2>Made carefully, made to last</h2><p>Baby skin safe, non-toxic and hand-crafted. Founded in 2015 by Keerthi Nagacharan.</p></div></div>
     <div class="stats"><div><b>100%</b>baby skin safe</div><div><b>Non-toxic</b>material</div><div><b>1 Lakh+</b>lifecasting done</div><div><b>3 weeks</b>typical delivery</div></div></div></section>
   <section class="s"><div class="wrap"><div class="head"><div><h2>Visit a studio</h2></div></div><div class="grid" id="studios"></div>
@@ -549,7 +549,7 @@ pages.frame = async () => {
         <pre class="fr-sum">${esc(frSummaryText(d))}</pre><p style="margin-top:18px;display:flex;gap:10px;flex-wrap:wrap"><a class="btn primary" href="#/">Back to home</a><button class="btn ghost" id="again">Design another frame</button></p></div></div>`;
       $("#again").onclick = () => { Object.assign(FR, { step: 1, img: null, name: "", dob: "", tob: "", weight: "", height: "", zoom: 1, x: 0, y: 0, done: null }); render(); }; return; }
     const lead = { 1: "Upload your photo", 2: "Choose a frame", 3: "Details for the frame", 4: "Size and finish", 5: "Where should we send it?" }[FR.step];
-    main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Customize my frame</h1>
+    main.innerHTML = `<div class="wrap wiz-page"><div><h1 style="font-size:clamp(1.8rem,4vw,2.6rem);margin:26px 0 16px">Photo frame designer</h1>
       <p style="margin:-6px 0 16px"><a class="btn gold small" href="/shadowbox-3d">New: see our Classic Black shadowbox in 3D</a></p>
       <ol class="wiz" aria-label="Steps">${FR_STEPS.map((s, i) => `<li class="${FR.step === i + 1 ? "on" : FR.step > i + 1 ? "done" : ""}"${FR.step === i + 1 ? ' aria-current="step"' : ""}><i>${FR.step > i + 1 ? "&#10003;" : i + 1}</i><span>${s}</span></li>`).join("")}</ol>
       <p class="wiz-count">Step ${FR.step} of ${FR_STEPS.length}: <b>${FR_STEPS[FR.step - 1]}</b></p>
@@ -676,10 +676,10 @@ async function frAr(d) {
 }
 
 // ---------- router ----------
-const TITLES = { home: "Lifeimpressions | Baby hand & foot casting", services: "Services & prices", frame: "Customize my frame", book: "Book a session", gallery: "Gallery", locations: "Our studios", shop: "Shop", franchise: "Franchise", contact: "Contact us", faq: "FAQ", manage: "Your booking" };
+const TITLES = { home: "Lifeimpressions | Baby hand & foot casting", services: "Services & prices", frame: "Photo frame designer", book: "Book a session", gallery: "Gallery", locations: "Our studios", shop: "Shop", franchise: "Franchise", contact: "Contact us", faq: "FAQ", manage: "Your booking" };
 async function route() {
   const raw = location.hash.replace(/^#/, "") || "/", [path, qs] = raw.split("?"), q = new URLSearchParams(qs || ""), seg = path.split("/").filter(Boolean);
-  const key = seg[0] || "home"; $("#wa").style.display = (key === "book" || key === "manage") ? "none" : ""; $("#nav").classList.remove("open"); $("#burger").setAttribute("aria-expanded", "false");
+  let key = seg[0] || "home"; if (key === "frame") { location.replace("/shadowbox-3d"); return; } if (key === "photo-frame") key = "frame"; $("#wa").style.display = (key === "book" || key === "manage") ? "none" : ""; $("#nav").classList.remove("open"); $("#burger").setAttribute("aria-expanded", "false");
   $$("nav a.l").forEach((a) => a.classList.toggle("on", a.getAttribute("href") === "#/" + key));
   try {
     if (key === "policies") pages.policy(seg[1]); else if (key === "manage") await pages.manage(q, seg[1] || ""); else if (key === "book") await pages.book(q);

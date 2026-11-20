@@ -235,11 +235,15 @@ export function buildShadowbox(o, opts = {}) {
   // casts
   const fin = FINISHES[o.finish] || FINISHES.silver, skin = keep(skinTexture());
   const castMat = keep(new THREE.MeshStandardMaterial({ color: fin.color, metalness: fin.metal, roughness: fin.rough, bumpMap: skin, bumpScale: 1.6, envMapIntensity: 1.0 }));
+  const casts = [];
   for (const [kind, fx, fy, fl, tilt, mirror] of L.casts) {
     const geo = castGeometry(kind, mirror), m = new THREE.Mesh(geo, castMat), k = (fl * ih) / geo.userData.len;
     m.scale.setScalar(k); m.rotation.z = THREE.MathUtils.degToRad(tilt); m.position.set((fx - 0.5) * iw, (0.5 - fy) * ih, BOARD_Z - 0.5 - (geo.userData.sink || 0) * k);
-    m.castShadow = true; m.receiveShadow = true; m.name = "cast-" + kind; group.add(m);
+    m.castShadow = true; m.receiveShadow = true; m.name = "cast-" + kind; group.add(m); casts.push(m);
   }
+  // The phone's wall viewer draws no shadows, so the AR file carries them baked in:
+  // each cast's soft shadow on the board, the frame's shade on the board edges, and a drop shadow on the wall.
+  if (opts.forExport) bakeShadows(group, casts, keep, iw, ih, ow, oh);
   if (o.glass) {
     // slim glass just under the lip: clear, with sharp reflections of the room
     const glassMat = keep(new THREE.MeshPhysicalMaterial({ color: 0xffffff, metalness: 0, roughness: 0.02, transparent: true, opacity: 0.08,
@@ -258,6 +262,52 @@ export function buildShadowbox(o, opts = {}) {
     }
   }
   return { group, ow, oh, iw, ih, dispose: () => own.forEach((x) => x.dispose()) };
+}
+
+/** blur by shrinking and enlarging (canvas filter blur is missing on some iPhones) */
+function softened(src, r) {
+  let cur = src;
+  for (const f of [r / 2.2, r / 3.2]) {
+    const sw = Math.max(2, Math.round(src.width / f)), sh = Math.max(2, Math.round(src.height / f));
+    const sm = document.createElement("canvas"); sm.width = sw; sm.height = sh; const a = sm.getContext("2d"); a.imageSmoothingQuality = "high"; a.drawImage(cur, 0, 0, sw, sh);
+    const big = document.createElement("canvas"); big.width = src.width; big.height = src.height; const b = big.getContext("2d"); b.imageSmoothingQuality = "high"; b.drawImage(sm, 0, 0, src.width, src.height);
+    cur = big;
+  }
+  return cur;
+}
+
+/** shadow textures for the AR file (light from the upper right, like the 3D view) */
+function bakeShadows(group, casts, keep, iw, ih, ow, oh) {
+  const PX = 2;                                   // canvas pixels per mm
+  const plane = (w, h, canvas, z, name) => {
+    const t = keep(new THREE.CanvasTexture(canvas)); t.colorSpace = THREE.SRGBColorSpace; t.userData.mimeType = "image/png";
+    const m = new THREE.Mesh(keep(new THREE.PlaneGeometry(w, h)), keep(new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false })));
+    m.position.z = z; m.name = name; m.renderOrder = 1; group.add(m);
+  };
+  // 1. casts on the board: their real outline, pushed down-left and blurred
+  const c = document.createElement("canvas"); c.width = Math.round(iw * PX); c.height = Math.round(ih * PX);
+  const sil = document.createElement("canvas"); sil.width = c.width; sil.height = c.height; const s = sil.getContext("2d");
+  s.fillStyle = "#000"; const v = new THREE.Vector3();
+  for (const m of casts) {
+    m.updateMatrix(); const pos = m.geometry.attributes.position, idx = m.geometry.index.array, xy = new Float32Array(pos.count * 2);
+    let top = 0;
+    for (let i = 0; i < pos.count; i++) { v.fromBufferAttribute(pos, i).applyMatrix4(m.matrix); xy[i * 2] = (v.x + iw / 2) * PX; xy[i * 2 + 1] = (ih / 2 - v.y) * PX; top = Math.max(top, v.z); }
+    const h = Math.max(0, top - BOARD_Z), dx = -h * 0.32 * PX, dy = h * 0.42 * PX;    // taller casts throw longer shadows
+    s.save(); s.translate(dx, dy); s.beginPath();
+    for (let i = 0; i < idx.length; i += 3) { const a = idx[i] * 2, b = idx[i + 1] * 2, d = idx[i + 2] * 2; s.moveTo(xy[a], xy[a + 1]); s.lineTo(xy[b], xy[b + 1]); s.lineTo(xy[d], xy[d + 1]); s.closePath(); }
+    s.fill(); s.restore();
+  }
+  const g = c.getContext("2d"); g.globalAlpha = 0.55; g.drawImage(softened(sil, 7 * PX), 0, 0); g.globalAlpha = 1;
+  // inner edges: the moulding shades the top and right of the board
+  const edge = (x0, y0, x1, y1, a) => { const gr = g.createLinearGradient(x0, y0, x1, y1); gr.addColorStop(0, `rgba(0,0,0,${a})`); gr.addColorStop(1, "rgba(0,0,0,0)"); g.fillStyle = gr; g.fillRect(0, 0, c.width, c.height); };
+  edge(0, 0, 0, 22 * PX, 0.45); edge(c.width, 0, c.width - 18 * PX, 0, 0.35); edge(0, 0, 10 * PX, 0, 0.2); edge(0, c.height, 0, c.height - 8 * PX, 0.15);
+  plane(iw, ih, c, BOARD_Z + 0.3, "shadow-board");
+  // 2. drop shadow on the wall, below and to the left of the frame
+  const M = 90, w2 = ow + 2 * M, h2 = oh + 2 * M, q = 1, wc = document.createElement("canvas"); wc.width = Math.round(w2 * q); wc.height = Math.round(h2 * q);
+  const raw = document.createElement("canvas"); raw.width = wc.width; raw.height = wc.height; const rg = raw.getContext("2d");
+  rg.fillStyle = "rgba(0,0,0,0.5)"; rg.fillRect((M - 14) * q, (M + 20) * q, ow * q, oh * q);
+  wc.getContext("2d").drawImage(softened(raw, 22 * q), 0, 0);
+  plane(w2, h2, wc, -0.6, "shadow-wall");
 }
 
 /** "View on my wall": the frame as a GLB in metres, for the phone's AR viewer. */

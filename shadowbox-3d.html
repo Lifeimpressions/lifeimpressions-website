@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Design your 3D shadowbox | Lifeimpressions</title>
+<title>Customize my frame | Lifeimpressions</title>
 <meta name="description" content="See your baby's hand and foot casts in a black shadowbox frame in 3D, with name, birth date, time, weight, blood group and photo. Turn it around, then view it on your wall.">
 <meta name="theme-color" content="#17130F">
 <link rel="icon" href="assets/icon.png">
@@ -52,10 +52,15 @@
 <body>
 <header class="top"><div class="wrap">
   <a class="logo" href="/#/" aria-label="Lifeimpressions home"><img src="assets/logo.png" alt="Lifeimpressions" width="134" height="44"></a>
-  <nav aria-label="Main" style="display:flex;gap:6px;align-items:center"><a class="l" href="/#/frame">Customize my frame</a><a class="btn primary small" href="/#/book">Book now</a></nav>
+  <button class="burger" id="burger" aria-label="Menu" aria-expanded="false">&#9776;</button>
+  <nav id="nav" aria-label="Main">
+    <a class="l" href="/#/services">Services</a><a class="l on" href="/shadowbox-3d" aria-current="page">Customize my frame</a><a class="l" href="/#/gallery">Gallery</a><a class="l" href="/#/locations">Studios</a>
+    <a class="l" href="/#/franchise">Franchise</a><a class="l" href="/#/shop">Shop</a><a class="l" href="/#/faq">FAQ</a><a class="l" href="/#/contact">Contact</a>
+    <a class="btn primary small" href="/#/book">Book now</a>
+  </nav>
 </div></header>
 <main class="s3-wrap">
-  <div class="s3-head"><h1>Your shadowbox in 3D</h1><p>Silver hand and foot casts in our Classic Black frame, with your baby's name, birth details and photo. Drag to turn it, pinch or scroll to zoom.</p></div>
+  <div class="s3-head"><h1>Customize my frame</h1><p>Silver hand and foot casts in our Classic Black frame, with your baby's name, birth details and photo. Drag to turn it, pinch or scroll to zoom. <a href="/#/photo-frame">Only a photo frame? Use the photo frame designer.</a></p></div>
   <div class="s3-grid">
     <div>
       <div class="s3-stage" id="stage"><div class="s3-msg" id="msg">Loading the 3D frame…</div></div>
@@ -91,6 +96,7 @@
 <script type="module">
 import { createViewer, FINISHES, BOARDS, fontsReady, shadowboxGlb, loadHandScan } from "./shadowbox3d.js";
 const $ = (s) => document.querySelector(s);
+$("#burger").onclick = () => { const o = $("#nav").classList.toggle("open"); $("#burger").setAttribute("aria-expanded", o); };
 const S = { wCm: 50, hCm: 25, board: "orange", finish: "silver", glass: true, name: "", dob: "", tob: "", weight: "", blood: "", img: null, zoom: 1, ghost: true };
 const esc = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const swatches = (el, list, key, dot) => { el.innerHTML = Object.entries(list).map(([k, v]) => `<button type="button" data-k="${k}" class="${S[key] === k ? "on" : ""}" aria-pressed="${S[key] === k}"><i style="background:${dot(v)}"></i>${esc(v.name)}</button>`).join("");
@@ -135,7 +141,7 @@ $("#ar").onclick = async () => {
     if (!customElements.get("model-viewer")) await import("https://cdn.jsdelivr.net/npm/@google/model-viewer@4.0.0/dist/model-viewer.min.js");
     const base = { w: S.wCm, h: S.hCm }, url = URL.createObjectURL(await shadowboxGlb(S)), d = document.createElement("div"); d.className = "s3-ar";
     const pct = (k) => fmtSize(base.w * k, base.h * k);
-    d.innerHTML = `<div><button class="x" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" ar-scale="auto" camera-controls shadow-intensity="0.6" environment-image="neutral" alt="Your shadowbox">
+    d.innerHTML = `<div><button class="x" aria-label="Close">×</button><model-viewer src="${url}" ar ar-modes="webxr scene-viewer quick-look" ar-placement="wall" ar-scale="auto" camera-controls shadow-intensity="0" environment-image="neutral" alt="Your shadowbox">
       <div class="s3-size" id="arsize" aria-live="polite"><b>${fmtSize(base.w, base.h)}</b><span>Frame outside ${fmtSize(base.w + 2 * MOULD_CM, base.h + 2 * MOULD_CM)}</span><small>Pinch to make it bigger or smaller</small></div>
       <button slot="ar-button" class="btn gold" style="position:absolute;bottom:14px;left:50%;transform:translateX(-50%)">See it on my wall</button></model-viewer>
       <div id="arnew"></div>
