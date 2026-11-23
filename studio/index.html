@@ -7,9 +7,9 @@
 <meta name="theme-color" content="#1B2430">
 <meta name="tracker-version" content="2026-11-23c">
 <title>Lifeimpressions Studio Tracker</title>
-<link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="manifest" href="/studio/manifest.json">
+<link rel="icon" href="/studio/icon.png">
+<link rel="apple-touch-icon" href="/studio/icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Studio Tracker">
@@ -228,7 +228,7 @@ table.qc th.qcchk,table.qc td.qcchk{text-align:center;width:88px}
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
-<script src="config.js"></script>
+<script src="/studio/config.js"></script>
 <script>
 (function(){
 'use strict';
@@ -371,7 +371,7 @@ function b64urlToBytes(s){
 async function refreshPushState(){
   if(!pushSupported()){S.pushState=iosNeedsHomeScreen()?'ios-need-home-screen':'unsupported';return;}
   try{
-    var reg=await navigator.serviceWorker.register('sw.js');
+    var reg=await navigator.serviceWorker.register('/studio/sw.js',{scope:'/studio/'});
     var sub=await reg.pushManager.getSubscription();
     S.pushState=sub?'on':(Notification.permission==='denied'?'denied':'off');
   }catch(e){S.pushState='unsupported';}
@@ -379,7 +379,7 @@ async function refreshPushState(){
 async function enablePush(){
   if(S.pushBusy)return;S.pushBusy=true;render();
   try{
-    var reg=await navigator.serviceWorker.register('sw.js');
+    var reg=await navigator.serviceWorker.register('/studio/sw.js',{scope:'/studio/'});
     var perm=await Notification.requestPermission();
     if(perm!=='granted'){S.pushState=perm==='denied'?'denied':'off';S.pushBusy=false;render();return;}
     var sub=await reg.pushManager.getSubscription();
@@ -1094,7 +1094,7 @@ function vLost(x){
 function render(){
   if(!S.me)return;
   var app=$('app'),board=$('board'),bl=board?board.scrollLeft:0,sy=window.scrollY;var mb=document.querySelector('.mscroll-body'),msy=mb?mb.scrollTop:0;
-  var u=S.me,h='<div class="mscroll"><div class="mscroll-body"><div class="mobile-brand"><img src="brand-logo.png" alt="Lifeimpressions"></div><div class="shell"><aside class="side"><div class="brand"><img src="brand-logo.png" alt="Lifeimpressions"></div><div class="side-body"><span class="side-caption">Studio tracker</span><nav class="nav" aria-label="Main">'+
+  var u=S.me,h='<div class="mscroll"><div class="mscroll-body"><div class="mobile-brand"><img src="/studio/brand-logo.png" alt="Lifeimpressions"></div><div class="shell"><aside class="side"><div class="brand"><img src="/studio/brand-logo.png" alt="Lifeimpressions"></div><div class="side-body"><span class="side-caption">Studio tracker</span><nav class="nav" aria-label="Main">'+
     NAV.map(function(n){return '<button data-a="nav" data-v="'+n[0]+'"'+(S.view===n[0]?' aria-current="page"':'')+'>'+svg(n[2])+n[1]+'</button>';}).join('')+
     '</nav><div class="sidenote"><span style="color:var(--sidebar-ink)">Signed in as <b style="color:var(--sidebar-ink)">'+esc(u.name)+'</b><br>'+(u.role==='admin'?'Admin, all locations':esc(locName(u.location_id)))+'</span>'+pushWidget('sm')+'<button class="btn sm ghost" data-a="signout">Sign out</button></div></div></aside><main class="'+(S.busy?'busy':'')+'">';
   h+='<div class="top"><h1>'+TITLES[S.view]+'</h1><div class="who">';
