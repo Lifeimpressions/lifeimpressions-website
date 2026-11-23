@@ -5,7 +5,7 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1B2430">
-<meta name="tracker-version" content="2026-11-23b">
+<meta name="tracker-version" content="2026-11-23c">
 <title>Lifeimpressions Studio Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
@@ -815,7 +815,7 @@ function vSettings(){
     (R.addons||[]).map(function(a){return '<tr><td>Add-on: '+esc(a.name)+'</td><td>'+inr(a.price_incl_gst)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
   h+='<div class="panel"><h2>Stage targets (days from casting)</h2><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Complete by</th></tr></thead><tbody>'+
     (R.stages||[]).map(function(s){return '<tr><td>'+esc(STAGE_NAMES[s.stage])+'</td><td>'+(s.complete_by_day==null?'Customer or staff paced':'Day '+s.complete_by_day)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
-  return h+'<p class="small muted">Prices, staff and targets are changed in Supabase for now (Table Editor). Editing screens can be added later.</p><p class="small muted">App version 2026-11-23b</p></div>';
+  return h+'<p class="small muted">Prices, staff and targets are changed in Supabase for now (Table Editor). Editing screens can be added later.</p><p class="small muted">App version 2026-11-23c</p></div>';
 }
 
 /* job drawer */
@@ -875,7 +875,9 @@ function shCheck(j,k,text){
 }
 function vJobSheet(j){
   var st=sheetChip(j),sh=sheetOf(j),h3=function(t){return '<h3 class="full" style="margin-top:10px">'+esc(t)+'</h3>';};
-  return '<div class="panel" id="jobsheet"><div class="spread" style="margin-bottom:6px"><h2>Job sheet</h2><span class="chip '+st.c+'" id="sh-chip">'+st.t+'</span></div>'+
+  S.sheetOpen=S.sheetOpen||{};
+  if(!S.sheetOpen[j.id])return '<div class="panel" id="jobsheet"><div class="spread"><div class="row" style="gap:10px"><h2>Job sheet</h2><span class="chip '+st.c+'" id="sh-chip">'+st.t+'</span></div><button class="btn sm ghost" data-a="toggle-sheet" data-id="'+j.id+'" aria-expanded="false">Open job sheet</button></div></div>';
+  return '<div class="panel" id="jobsheet"><div class="spread" style="margin-bottom:6px"><div class="row" style="gap:10px"><h2>Job sheet</h2><span class="chip '+st.c+'" id="sh-chip">'+st.t+'</span></div><button class="btn sm ghost" data-a="toggle-sheet" data-id="'+j.id+'" aria-expanded="true">Hide</button></div>'+
     '<p class="muted small" style="margin-bottom:12px">The digital version of the paper job sheet. Answers save as you go. The customer still signs the paper copy.</p>'+
     '<dl class="facts" style="margin-bottom:16px">'+
       '<div><dt>Job ID</dt><dd>'+esc(j.job_no)+'</dd></div>'+
@@ -1224,6 +1226,7 @@ document.addEventListener('click',async function(ev){
       var rn=await sb.from('enquiries').update({notes:(ex.notes?ex.notes+'\n':'')+line}).eq('id',id);
       if(rn.error)throw rn.error;
       S.modal=null;await refreshAfter('Reminder opened in WhatsApp for '+ex.name+'.');break;}
+    case 'toggle-sheet':{S.sheetOpen=S.sheetOpen||{};S.sheetOpen[id]=!S.sheetOpen[id];render();break;}
     case 'manual-photo':{
       var jp=jobById(id),patch={photo_received_at:new Date().toISOString(),notes:(jp.notes?jp.notes+'\n':'')+manualLine('Customer photo marked received (sent on WhatsApp)')};
       if(jp.stage==='awaiting_photo')patch.stage='finishing';
