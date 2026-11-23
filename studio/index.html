@@ -5,6 +5,7 @@
 <meta name="robots" content="noindex">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1B2430">
+<meta name="tracker-version" content="2026-11-23b">
 <title>Lifeimpressions Studio Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png">
@@ -145,6 +146,10 @@ table.qc th.qcchk,table.qc td.qcchk{text-align:center;width:88px}
 .sheet:focus,.dialog:focus{outline:none}
 .sheet:has(.jhead){padding-top:0}
 .jhead{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin:0 -24px 16px;padding:calc(14px + env(safe-area-inset-top,0px)) 24px 12px;position:sticky;top:0;z-index:5;background:var(--ground);border-bottom:1px solid var(--line)}
+.sheet:has(.jfoot){padding-bottom:0!important}
+.jfoot{position:sticky;bottom:0;z-index:5;display:flex;gap:10px;margin:16px -24px 0;padding:12px 24px calc(12px + env(safe-area-inset-bottom,0px));background:var(--surface);border-top:1px solid var(--line);box-shadow:0 -4px 14px rgba(0,0,0,.06)}
+.jfoot .btn{flex:1;min-height:50px;font-size:16px;font-weight:700}
+.jfoot .btn.close-b{flex:0 0 34%}
 .jhead .close-x{flex:none;min-width:84px;min-height:44px;font-weight:700}
 .jgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:22px;align-items:start}
 .facts{display:grid;grid-template-columns:1fr 1fr;gap:12px 18px}
@@ -212,6 +217,7 @@ table.qc th.qcchk,table.qc td.qcchk{text-align:center;width:88px}
   .sheet{padding:14px 14px calc(30px + env(safe-area-inset-bottom,0px))}
   .jhead{margin:0 -14px 14px;padding:calc(10px + env(safe-area-inset-top,0px)) 14px 10px}
   .jhead h1{font-size:22px}
+  .jfoot{margin:14px -14px 0;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px))}
   .form{grid-template-columns:1fr}
   .col{flex-basis:78vw}
   .bar{grid-template-columns:90px 1fr 64px}
@@ -809,7 +815,7 @@ function vSettings(){
     (R.addons||[]).map(function(a){return '<tr><td>Add-on: '+esc(a.name)+'</td><td>'+inr(a.price_incl_gst)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
   h+='<div class="panel"><h2>Stage targets (days from casting)</h2><div class="tablewrap"><table><thead><tr><th>Stage</th><th>Complete by</th></tr></thead><tbody>'+
     (R.stages||[]).map(function(s){return '<tr><td>'+esc(STAGE_NAMES[s.stage])+'</td><td>'+(s.complete_by_day==null?'Customer or staff paced':'Day '+s.complete_by_day)+'</td></tr>';}).join('')+'</tbody></table></div></div>';
-  return h+'<p class="small muted">Prices, staff and targets are changed in Supabase for now (Table Editor). Editing screens can be added later.</p></div>';
+  return h+'<p class="small muted">Prices, staff and targets are changed in Supabase for now (Table Editor). Editing screens can be added later.</p><p class="small muted">App version 2026-11-23b</p></div>';
 }
 
 /* job drawer */
@@ -852,6 +858,7 @@ function vJob(j){
     '<div><dt>GST invoice no.</dt><dd class="row"><label class="sr" for="inv">GST invoice number</label><input type="text" id="inv" value="'+esc(j.invoice_no||'')+'" style="min-height:36px;width:130px"><button class="btn sm ghost" data-a="save-invoice" data-id="'+j.id+'">Save</button></dd></div></dl>'+
     (j.stage!=='delivered'?'<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)"><button class="btn sm ghost" data-a="cancel-booking" data-id="'+j.id+'" style="color:var(--rose)">Cancel booking</button></div>':'')+'</div>';
   h+='</div><div>'+phone(j)+'</div></div>';
+  h+=jobFoot(j);
   return h;
 }
 function shText(j,k,label,hint,type,extra){
@@ -977,6 +984,17 @@ function stageControls(j){
   if(j.stage==='awaiting_approval'&&j.approval==='pending')h+='<p class="small muted" style="margin-top:10px">Final fixing stays locked until the customer approves. Head office marks it approved once they reply.</p>';
   if(j.stage==='booked'&&j.day_no<0)h+='<p class="small muted" style="margin-top:10px">Casting can be marked done from '+esc(fmt(j.casting_date))+'.</p>';
   return h;
+}
+function jobFoot(j){
+  var lbl=actionLabel(j),lay=jobFiles(j,'layout').length,cta='';
+  var needPhoto=!j.photo_received_at&&(j.stage==='awaiting_photo'||j.stage==='finishing');
+  if(needPhoto)cta='<button class="btn gold" data-a="manual-photo" data-id="'+j.id+'">Photo received</button>';
+  else if(j.stage==='awaiting_approval'&&j.approval==='pending'&&isAdmin())cta='<button class="btn gold" data-a="mark-approved" data-id="'+j.id+'">Mark approved</button>';
+  else if(lbl){
+    var dis=(j.stage==='layout_ready'&&!lay)||(j.stage==='quality_check'&&!j.qc_approved)||(j.stage==='booked'&&j.day_no<0);
+    cta='<button class="btn gold" data-a="adv" data-id="'+j.id+'"'+(dis?' disabled':'')+'>'+esc(lbl)+'</button>';
+  }
+  return '<div class="jfoot"><button class="btn ghost close-b" data-a="close">\u2715 Close</button>'+cta+'</div>';
 }
 function phone(j){
   var msgs=S.msgs[j.id]||[],last=null;
